@@ -80,18 +80,22 @@ const GithubStats = () => {
 		<div className="mt-12 w-full">
 			<div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-2">
 				<div>
-					<h4 className="text-sm font-medium text-zinc-500 mb-1">Featured</h4>
-					<h2 className="text-2xl font-bold text-white mb-1">2025 Activity</h2>
-					<p className="text-sm text-zinc-400">
+					<h4 className="text-sm font-medium text-muted-foreground mb-1">
+						Featured
+					</h4>
+					<h2 className="text-2xl font-bold text-foreground mb-1">
+						2025 Activity
+					</h2>
+					<p className="text-sm text-muted-foreground">
 						Total in 2025:{" "}
-						<span className="text-white font-semibold">
+						<span className="text-foreground font-semibold">
 							{data.total.toLocaleString()}
 						</span>{" "}
 						contributions
 					</p>
 				</div>
 
-				<div className="mt-4 sm:mt-0 flex items-center gap-2 text-sm text-zinc-400">
+				<div className="mt-4 sm:mt-0 flex items-center gap-2 text-sm text-muted-foreground">
 					<span className="flex items-center gap-1.5">
 						<span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
 						Online
@@ -99,9 +103,9 @@ const GithubStats = () => {
 				</div>
 			</div>
 
-			<div className="bg-[#0c0c0e] border border-zinc-800/50 rounded-xl p-6 overflow-x-auto">
+			<div className="bg-card border border-border/50 rounded-xl p-6 overflow-x-auto">
 				<div className="min-w-[700px]">
-					<div className="flex text-[10px] text-zinc-500 mb-2 pl-4">
+					<div className="flex text-[10px] text-muted-foreground mb-2 pl-4">
 						{months.map((month) => (
 							<div key={month} className="flex-1">
 								{month}
@@ -117,7 +121,7 @@ const GithubStats = () => {
 							>
 								{week.map((day) => {
 									const colors = [
-										"bg-[#161b22]", // 0
+										"bg-secondary/50", // 0
 										"bg-[#0e4429]", // 1
 										"bg-[#006d32]", // 2
 										"bg-[#26a641]", // 3
@@ -127,7 +131,7 @@ const GithubStats = () => {
 										<div
 											key={day.date}
 											title={`${day.count} contributions on ${day.date}`}
-											className={`w-[10px] h-[10px] rounded-[2px] ${colors[day.level]} transition-colors hover:ring-1 hover:ring-white/20`}
+											className={`w-[10px] h-[10px] rounded-[2px] ${colors[day.level]} transition-colors hover:ring-1 hover:ring-foreground/20`}
 										/>
 									);
 								})}
@@ -135,10 +139,10 @@ const GithubStats = () => {
 						))}
 					</div>
 
-					<div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-zinc-500">
+					<div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-muted-foreground">
 						<span>Less</span>
 						<div className="flex gap-[3px]">
-							<div className="w-[10px] h-[10px] rounded-[2px] bg-[#161b22]" />
+							<div className="w-[10px] h-[10px] rounded-[2px] bg-secondary/50" />
 							<div className="w-[10px] h-[10px] rounded-[2px] bg-[#0e4429]" />
 							<div className="w-[10px] h-[10px] rounded-[2px] bg-[#006d32]" />
 							<div className="w-[10px] h-[10px] rounded-[2px] bg-[#26a641]" />

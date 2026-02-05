@@ -109,8 +109,10 @@ const Projects = () => {
 	return (
 		<div id="projects" className="mt-20 w-full scroll-mt-24">
 			<div className="mb-12">
-				<h4 className="text-sm font-medium text-zinc-500 mb-1">Featured</h4>
-				<h2 className="text-4xl font-bold text-white tracking-tight">
+				<h4 className="text-sm font-medium text-muted-foreground mb-1">
+					Featured
+				</h4>
+				<h2 className="text-4xl font-bold text-foreground tracking-tight">
 					Projects
 				</h2>
 			</div>
@@ -119,7 +121,7 @@ const Projects = () => {
 				{projects.map((project) => (
 					<div
 						key={project.id}
-						className="group bg-[#0c0c0e] border border-zinc-800/50 rounded-3xl overflow-hidden flex flex-col transition-all hover:border-zinc-700/50 hover:shadow-2xl hover:shadow-white/[0.02]"
+						className="group bg-card border border-border/50 rounded-3xl overflow-hidden flex flex-col transition-all hover:border-border hover:shadow-2xl hover:shadow-foreground/[0.02]"
 					>
 						{/* Image Header */}
 						<div
@@ -130,18 +132,18 @@ const Projects = () => {
 
 							{/* Mockup Overlay Effect */}
 							<div className="absolute inset-0 flex items-center justify-center translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
-								<div className="w-[85%] h-full bg-[#121212] rounded-t-xl border-x border-t border-zinc-800/50 shadow-2xl relative">
+								<div className="w-[85%] h-full bg-background rounded-t-xl border-x border-t border-border/50 shadow-2xl relative">
 									{/* Inner mockup content placeholder */}
-									<div className="absolute inset-4 overflow-hidden rounded-md bg-zinc-900/50 flex flex-col gap-2">
-										<div className="h-4 w-1/3 bg-zinc-800 rounded animate-pulse" />
-										<div className="h-2 w-2/3 bg-zinc-800/50 rounded" />
-										<div className="h-2 w-1/2 bg-zinc-800/50 rounded" />
+									<div className="absolute inset-4 overflow-hidden rounded-md bg-secondary/50 flex flex-col gap-2">
+										<div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
+										<div className="h-2 w-2/3 bg-muted/50 rounded" />
+										<div className="h-2 w-1/2 bg-muted/50 rounded" />
 									</div>
 								</div>
 							</div>
 
 							{/* Project Icon Overlay */}
-							<div className="absolute -bottom-4 left-6 w-12 h-12 rounded-xl bg-[#121212] border border-zinc-800 flex items-center justify-center p-2.5 z-10 shadow-xl group-hover:scale-110 transition-transform">
+							<div className="absolute -bottom-4 left-6 w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center p-2.5 z-10 shadow-xl group-hover:scale-110 transition-transform">
 								<Image
 									src={project.logo}
 									alt={`${project.title} logo`}
@@ -156,7 +158,7 @@ const Projects = () => {
 						{/* Content */}
 						<div className="p-6 sm:p-8 pt-10 flex flex-col flex-grow text-left">
 							<div className="flex items-center justify-between mb-4">
-								<h3 className="text-xl font-bold text-white group-hover:text-zinc-300 transition-colors">
+								<h3 className="text-xl font-bold text-foreground group-hover:text-muted-foreground transition-colors">
 									{project.title}
 								</h3>
 								<div className="flex items-center gap-3">
@@ -164,7 +166,7 @@ const Projects = () => {
 										<a
 											key={`${project.id}-link-${link.type}`}
 											href={link.url}
-											className="text-zinc-500 hover:text-white transition-colors"
+											className="text-muted-foreground hover:text-foreground transition-colors"
 											aria-label={`${link.type} link for ${project.title}`}
 										>
 											{link.type === "globe" ? (
@@ -182,7 +184,7 @@ const Projects = () => {
 													<title>Website</title>
 													<circle cx="12" cy="12" r="10" />
 													<line x1="2" y1="12" x2="22" y2="12" />
-													<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+													<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
 												</svg>
 											) : (
 												<svg
@@ -201,12 +203,12 @@ const Projects = () => {
 								</div>
 							</div>
 
-							<p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-3">
+							<p className="text-muted-foreground text-sm leading-relaxed mb-6 line-clamp-3">
 								{project.description}
 							</p>
 
 							<div className="mt-auto">
-								<h5 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-3">
+								<h5 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
 									Technologies
 								</h5>
 								<div className="flex flex-wrap gap-2.5 mb-8">
@@ -220,21 +222,21 @@ const Projects = () => {
 												alt={`${tech.name} icon`}
 												width={18}
 												height={18}
-												className="w-4.5 h-4.5 opacity-60 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0"
+												className="w-4.5 h-4.5 opacity-60 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0 dark:invert-0 invert"
 												unoptimized
 											/>
 										</div>
 									))}
 								</div>
 
-								<div className="flex items-center justify-between pt-6 border-t border-zinc-800/50">
+								<div className="flex items-center justify-between pt-6 border-t border-border/50">
 									<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-medium border border-emerald-500/20">
 										<span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
 										{project.status}
 									</div>
 									<button
 										type="button"
-										className="flex items-center gap-1 text-[11px] font-semibold text-zinc-400 hover:text-white transition-all group/btn"
+										className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all group/btn"
 									>
 										View Details
 										<svg

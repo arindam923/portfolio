@@ -14,11 +14,14 @@ export const MDXComponents = {
 	pre: ({ children, ...props }: any) => {
 		const codeString = children.props.children ?? "";
 		return (
-			<div className="group relative my-8 rounded-[24px] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a] p-2 shadow-xl dark:shadow-2xl">
+			<div className="group relative my-8 rounded-[24px] border border-border bg-card p-2 shadow-xl">
 				<CopyButton code={codeString} />
 
-				<div className="rounded-[18px] border border-zinc-200 dark:border-zinc-800/50 bg-[#f6f8fa] dark:bg-[#000000] p-6 overflow-hidden">
-					<pre {...props} className="bg-transparent !m-0 !p-0 text-black dark:text-zinc-100">
+				<div className="rounded-[18px] border border-border/50 bg-muted/50 p-6 overflow-hidden">
+					<pre
+						{...props}
+						className="bg-transparent !m-0 !p-0 text-foreground font-mono text-sm leading-relaxed"
+					>
 						{children}
 					</pre>
 				</div>
@@ -37,18 +40,16 @@ export const MDXComponents = {
 	}) => (
 		<Link
 			href={href}
-			className="group block p-4 my-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-blue-500/50 transition-all duration-300 no-underline"
+			className="group block p-4 my-4 rounded-xl border border-border bg-card hover:border-blue-500/50 transition-all duration-300 no-underline"
 		>
 			<div className="flex justify-between items-start">
-				<h4 className="m-0 font-medium text-black dark:text-zinc-100">
-					{title}
-				</h4>
+				<h4 className="m-0 font-medium text-foreground">{title}</h4>
 				<ExternalLink
 					size={14}
-					className="text-zinc-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+					className="text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
 				/>
 			</div>
-			<p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-1">
+			<p className="m-0 mt-1 text-sm text-muted-foreground line-clamp-1">
 				{description}
 			</p>
 		</Link>
@@ -56,7 +57,7 @@ export const MDXComponents = {
 	h1: ({ className, ...props }: any) => (
 		<h1
 			className={cn(
-				"mt-12 scroll-m-20 text-4xl font-extrabold tracking-tight text-black dark:text-zinc-100 lg:text-5xl",
+				"mt-12 scroll-m-20 text-4xl font-extrabold tracking-tight text-foreground lg:text-5xl",
 				className,
 			)}
 			{...props}
@@ -65,7 +66,7 @@ export const MDXComponents = {
 	h2: ({ className, ...props }: any) => (
 		<h2
 			className={cn(
-				"mt-12 scroll-m-20 border-b border-zinc-200 dark:border-zinc-800 pb-2 text-3xl font-semibold tracking-tight text-black dark:text-zinc-100 first:mt-0",
+				"mt-12 scroll-m-20 border-b border-border pb-2 text-3xl font-semibold tracking-tight text-foreground first:mt-0",
 				className,
 			)}
 			{...props}
@@ -74,7 +75,7 @@ export const MDXComponents = {
 	h3: ({ className, ...props }: any) => (
 		<h3
 			className={cn(
-				"mt-8 scroll-m-20 text-xl font-semibold tracking-tight text-black dark:text-zinc-200",
+				"mt-8 scroll-m-20 text-xl font-semibold tracking-tight text-foreground",
 				className,
 			)}
 			{...props}
@@ -83,7 +84,7 @@ export const MDXComponents = {
 	h4: ({ className, ...props }: any) => (
 		<h4
 			className={cn(
-				"mt-6 scroll-m-20 text-lg font-medium tracking-tight text-black dark:text-zinc-300",
+				"mt-6 scroll-m-20 text-lg font-medium tracking-tight text-foreground",
 				className,
 			)}
 			{...props}
@@ -98,7 +99,23 @@ export const MDXComponents = {
 			const displayName = childType.displayName || childType.name;
 			return (
 				displayName &&
-				["h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "pre", "code", "div", "figure", "StepHeader"].includes(displayName)
+				[
+					"h1",
+					"h2",
+					"h3",
+					"h4",
+					"h5",
+					"h6",
+					"ul",
+					"ol",
+					"li",
+					"blockquote",
+					"pre",
+					"code",
+					"div",
+					"figure",
+					"StepHeader",
+				].includes(displayName)
 			);
 		});
 
@@ -109,7 +126,7 @@ export const MDXComponents = {
 		return (
 			<p
 				className={cn(
-					"leading-7 text-black dark:text-zinc-400 [&:not(:first-child)]:mt-6",
+					"leading-7 text-muted-foreground [&:not(:first-child)]:mt-6",
 					className,
 				)}
 				{...props}
@@ -120,7 +137,7 @@ export const MDXComponents = {
 	strong: ({ className, ...props }: any) => (
 		<strong
 			className={cn(
-				"font-semibold text-black dark:text-zinc-100 underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-700 decoration-2",
+				"font-semibold text-foreground underline underline-offset-4 decoration-muted-foreground/30 decoration-2",
 				className,
 			)}
 			{...props}
@@ -137,7 +154,7 @@ export const MDXComponents = {
 		caption?: string;
 	}) => (
 		<figure className="my-8">
-			<div className="relative aspect-video overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+			<div className="relative aspect-video overflow-hidden rounded-xl border border-border">
 				<Image
 					src={src}
 					alt={alt}
@@ -146,7 +163,7 @@ export const MDXComponents = {
 				/>
 			</div>
 			{caption && (
-				<figcaption className="mt-3 text-center text-sm text-zinc-500 dark:text-zinc-500">
+				<figcaption className="mt-3 text-center text-sm text-muted-foreground">
 					{caption}
 				</figcaption>
 			)}
@@ -155,13 +172,15 @@ export const MDXComponents = {
 
 	ul: ({ children }: any) => (
 		<div className="my-6 px-6">
-			<ul className="list-none space-y-3 p-0 text-black dark:text-zinc-400">{children}</ul>
+			<ul className="list-none space-y-3 p-0 text-muted-foreground">
+				{children}
+			</ul>
 		</div>
 	),
 	ol: ({ className, ...props }: any) => (
 		<ol
 			className={cn(
-				"my-6 ml-6 list-decimal space-y-3 text-black dark:text-zinc-400",
+				"my-6 ml-6 list-decimal space-y-3 text-muted-foreground",
 				className,
 			)}
 			{...props}
@@ -170,13 +189,12 @@ export const MDXComponents = {
 	blockquote: ({ className, ...props }: any) => (
 		<blockquote
 			className={cn(
-				"mt-6 border-l-2 border-zinc-300 dark:border-zinc-700 pl-6 italic text-black dark:text-zinc-300",
+				"mt-6 border-l-2 border-border pl-6 italic text-muted-foreground",
 				className,
 			)}
 			{...props}
 		/>
 	),
-
 
 	li: ({ children }: any) => {
 		const isTask = Array.isArray(children)
@@ -185,14 +203,14 @@ export const MDXComponents = {
 
 		if (isTask) {
 			return (
-				<li className="flex items-start gap-4 transition-opacity hover:opacity-80 text-black dark:text-zinc-400">
+				<li className="flex items-start gap-4 transition-opacity hover:opacity-80 text-muted-foreground">
 					{children}
 				</li>
 			);
 		}
 
 		return (
-			<li className="relative pl-10 before:absolute before:left-1 before:top-[0.6em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-zinc-500 dark:before:bg-zinc-700 text-black dark:text-zinc-400">
+			<li className="relative pl-10 before:absolute before:left-1 before:top-[0.6em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-muted-foreground/50 text-muted-foreground">
 				{children}
 			</li>
 		);
@@ -206,7 +224,7 @@ export const MDXComponents = {
 						type="checkbox"
 						defaultChecked={checked}
 						readOnly
-						className="peer h-5 w-5 cursor-default appearance-none rounded-[6px] border border-zinc-400 dark:border-zinc-700 bg-transparent transition-all checked:border-blue-500 checked:bg-blue-500"
+						className="peer h-5 w-5 cursor-default appearance-none rounded-[6px] border border-muted-foreground/30 bg-transparent transition-all checked:border-blue-500 checked:bg-blue-500"
 					/>
 					<Check
 						className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
@@ -219,7 +237,7 @@ export const MDXComponents = {
 	},
 
 	StepHeader: ({ children }: { children: React.ReactNode }) => (
-		<h4 className="mt-8 mb-4 text-[15px] font-medium text-black dark:text-zinc-400 tracking-tight">
+		<h4 className="mt-8 mb-4 text-[15px] font-medium text-foreground tracking-tight">
 			{children}
 		</h4>
 	),

@@ -59,17 +59,17 @@ const BlogCommentSection = () => {
 
 	return (
 		<motion.section
-			className="mt-20 pt-12 border-t border-zinc-200 dark:border-zinc-800"
+			className="mt-20 pt-12 border-t border-border"
 			initial={{ opacity: 0 }}
 			whileInView={{ opacity: 1 }}
 			viewport={{ once: true }}
 			transition={{ duration: 0.6 }}
 		>
 			<div className="flex items-center justify-between mb-8">
-				<h2 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+				<h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
 					Comments
 					<motion.span
-						className="px-3 py-1 rounded-full bg-zinc-200 dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 font-normal"
+						className="px-3 py-1 rounded-full bg-secondary text-sm text-muted-foreground font-normal"
 						initial={{ scale: 0 }}
 						animate={{ scale: 1 }}
 						transition={{ delay: 0.3, type: "spring" }}
@@ -81,7 +81,7 @@ const BlogCommentSection = () => {
 					whileHover={{ scale: 1.05 }}
 					whileTap={{ scale: 0.95 }}
 					onClick={() => setIsCommentsOpen(!isCommentsOpen)}
-					className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+					className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
 				>
 					{isCommentsOpen ? "Collapse" : "Expand"}
 					<motion.svg
@@ -113,7 +113,7 @@ const BlogCommentSection = () => {
 					>
 						{/* Comment Input */}
 						<motion.div
-							className="mb-8 p-6 rounded-2xl bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800"
+							className="mb-8 p-6 rounded-2xl bg-muted/50 border border-border"
 							initial={{ y: 20, opacity: 0 }}
 							animate={{ y: 0, opacity: 1 }}
 							transition={{ delay: 0.1 }}
@@ -127,14 +127,14 @@ const BlogCommentSection = () => {
 										value={commentText}
 										onChange={(e) => setCommentText(e.target.value)}
 										placeholder="Add to the discussion..."
-										className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none min-h-[100px]"
+										className="w-full bg-background border border-border rounded-xl p-4 text-foreground placeholder-muted-foreground focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none min-h-[100px]"
 									/>
 									<div className="flex justify-end mt-3 gap-3">
 										<motion.button
 											whileHover={{ scale: 1.02 }}
 											whileTap={{ scale: 0.98 }}
 											onClick={() => setCommentText("")}
-											className="px-4 py-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm"
+											className="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-sm"
 										>
 											Cancel
 										</motion.button>
@@ -142,7 +142,7 @@ const BlogCommentSection = () => {
 											whileHover={{ scale: 1.02 }}
 											whileTap={{ scale: 0.98 }}
 											disabled={!commentText.trim()}
-											className="px-6 py-2 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-black font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+											className="px-6 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
 										>
 											Post Comment
 										</motion.button>
@@ -163,29 +163,29 @@ const BlogCommentSection = () => {
 								>
 									<div className="flex gap-4">
 										<motion.div
-											className="w-10 h-10 rounded-full bg-zinc-300 dark:bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-700 dark:text-zinc-200 flex-shrink-0"
+											className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold text-foreground flex-shrink-0"
 											whileHover={{ scale: 1.1, rotate: 5 }}
 										>
 											{comment.avatar}
 										</motion.div>
 										<div className="flex-1">
 											<div className="flex items-center gap-2 mb-1">
-												<span className="font-semibold text-zinc-900 dark:text-white">
+												<span className="font-semibold text-foreground">
 													{comment.author}
 												</span>
-												<span className="text-zinc-400 dark:text-zinc-500 text-sm">•</span>
-												<span className="text-zinc-500 text-sm">
+												<span className="text-muted-foreground text-sm">•</span>
+												<span className="text-muted-foreground text-sm">
 													{comment.date}
 												</span>
 											</div>
-											<p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-3">
+											<p className="text-muted-foreground leading-relaxed mb-3">
 												{comment.content}
 											</p>
 											<div className="flex items-center gap-4">
 												<motion.button
 													whileHover={{ scale: 1.1 }}
 													whileTap={{ scale: 0.9 }}
-													className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm"
+													className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
 												>
 													<svg
 														className="w-4 h-4"
@@ -205,7 +205,7 @@ const BlogCommentSection = () => {
 												<motion.button
 													whileHover={{ scale: 1.1 }}
 													whileTap={{ scale: 0.9 }}
-													className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm"
+													className="text-muted-foreground hover:text-foreground transition-colors text-sm"
 												>
 													Reply
 												</motion.button>
@@ -213,7 +213,7 @@ const BlogCommentSection = () => {
 
 											{/* Replies */}
 											{comment.replies && (
-												<div className="mt-4 ml-4 pl-4 border-l-2 border-zinc-200 dark:border-zinc-800 space-y-4">
+												<div className="mt-4 ml-4 pl-4 border-l-2 border-border space-y-4">
 													{comment.replies.map((reply, replyIndex) => (
 														<motion.div
 															key={reply.id}
@@ -224,27 +224,27 @@ const BlogCommentSection = () => {
 															}}
 															className="flex gap-3"
 														>
-															<div className="w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-700 dark:text-zinc-200 flex-shrink-0">
+															<div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground flex-shrink-0">
 																{reply.avatar}
 															</div>
 															<div className="flex-1">
 																<div className="flex items-center gap-2 mb-1">
-																	<span className="font-semibold text-zinc-900 dark:text-white text-sm">
+																	<span className="font-semibold text-foreground text-sm">
 																		{reply.author}
 																	</span>
-																	<span className="text-zinc-500 text-xs">
+																	<span className="text-muted-foreground text-xs">
 																		•
 																	</span>
-																	<span className="text-zinc-500 text-xs">
+																	<span className="text-muted-foreground text-xs">
 																		{reply.date}
 																	</span>
 																</div>
-																<p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed mb-2">
+																<p className="text-muted-foreground text-sm leading-relaxed mb-2">
 																	{reply.content}
 																</p>
 																<button
 																	type="button"
-																	className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors text-xs"
+																	className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-xs"
 																>
 																	<svg
 																		className="w-3 h-3"
@@ -282,7 +282,7 @@ const BlogCommentSection = () => {
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -20 }}
-						className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/50 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-900/50 transition-colors"
+						className="flex items-center gap-4 p-4 rounded-2xl bg-secondary/50 border border-border cursor-pointer hover:bg-secondary transition-colors"
 						onClick={() => setIsCommentsOpen(true)}
 					>
 						<div className="flex -space-x-2">
@@ -292,22 +292,22 @@ const BlogCommentSection = () => {
 									initial={{ scale: 0, x: -10 }}
 									animate={{ scale: 1, x: 0 }}
 									transition={{ delay: i * 0.1 }}
-									className="w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-xs font-bold text-zinc-700 dark:text-zinc-200"
+									className="w-8 h-8 rounded-full bg-secondary border-2 border-background flex items-center justify-center text-xs font-bold text-foreground"
 								>
 									{comment.avatar}
 								</motion.div>
 							))}
 							{mockComments.length > 3 && (
-								<div className="w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+								<div className="w-8 h-8 rounded-full bg-secondary border-2 border-background flex items-center justify-center text-xs text-muted-foreground">
 									+{mockComments.length - 3}
 								</div>
 							)}
 						</div>
-						<p className="text-zinc-600 dark:text-zinc-400 text-sm">
+						<p className="text-muted-foreground text-sm">
 							Join the discussion with {mockComments.length} others
 						</p>
 						<motion.svg
-							className="w-5 h-5 text-zinc-500 ml-auto"
+							className="w-5 h-5 text-muted-foreground ml-auto"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"

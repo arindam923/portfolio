@@ -47,7 +47,7 @@ export function BlogPostHeader({
 							stiffness: 200,
 						}}
 						whileHover={{ scale: 1.05 }}
-						className="px-3 py-1 rounded-full bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-400 cursor-default hover:bg-zinc-300 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors"
+						className="px-3 py-1 rounded-full bg-secondary border border-border text-xs font-medium text-muted-foreground cursor-default hover:bg-muted transition-colors"
 					>
 						{tag}
 					</motion.span>
@@ -55,7 +55,7 @@ export function BlogPostHeader({
 			</motion.div>
 
 			<motion.h1
-				className="text-4xl sm:text-6xl font-bold text-zinc-900 dark:text-white mb-6 tracking-tight leading-tight"
+				className="text-4xl sm:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight"
 				variants={fadeInUp}
 				transition={{ delay: 0.2 }}
 			>
@@ -63,7 +63,7 @@ export function BlogPostHeader({
 			</motion.h1>
 
 			<motion.p
-				className="text-xl text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed"
+				className="text-xl text-muted-foreground mb-8 leading-relaxed"
 				variants={fadeInUp}
 				transition={{ delay: 0.3 }}
 			>
@@ -71,11 +71,11 @@ export function BlogPostHeader({
 			</motion.p>
 
 			<motion.div
-				className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-8 border-t border-zinc-200 dark:border-zinc-800/50"
+				className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-8 border-t border-border/50"
 				variants={fadeInUp}
 				transition={{ delay: 0.4 }}
 			>
-				<div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-500">
+				<div className="flex items-center gap-3 text-muted-foreground">
 					<svg
 						className="w-5 h-5"
 						fill="none"
@@ -93,7 +93,7 @@ export function BlogPostHeader({
 						/>
 					</svg>
 					<span>{date}</span>
-					<span className="text-zinc-400 dark:text-zinc-600">•</span>
+					<span className="text-muted-foreground/50">•</span>
 					<span>4 min read</span>
 				</div>
 
@@ -110,7 +110,7 @@ export function BlogPostHeader({
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.5 + index * 0.1 }}
-							className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 hover:bg-zinc-200 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+							className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
 						>
 							{item.icon === "heart" && <Heart />}
 							{item.icon === "clap" && <MessageCircleCode />}
@@ -125,7 +125,7 @@ export function BlogPostHeader({
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.8 }}
-						className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+						className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
 					>
 						<Share />
 						Share

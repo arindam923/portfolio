@@ -25,10 +25,7 @@ const experiences: Experience[] = [
 		location: "United States (Remote)",
 		logo: "https://ramx.in/_next/image?url=%2Fcompany%2Fpromote.png&w=256&q=75",
 		status: "last Working",
-		links: [
-			{ type: "globe", url: "#" },
-			// { type: "x", url: "#" },
-		],
+		links: [{ type: "globe", url: "https://www.promote.fun" }],
 		technologies: [
 			{
 				name: "Next.js",
@@ -118,7 +115,7 @@ const ExperienceItem = ({
 	return (
 		<div className="last:mb-0">
 			<div
-				className="w-full flex items-start gap-4 cursor-pointer group text-left outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-xl p-2 -m-2 transition-all"
+				className="w-full flex items-start gap-4 cursor-pointer group text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/20 rounded-xl p-2 -m-2 transition-all"
 				onClick={(e) => {
 					if ((e.target as HTMLElement).closest("a")) return;
 					onToggle();
@@ -129,7 +126,7 @@ const ExperienceItem = ({
 				aria-expanded={isExpanded}
 			>
 				{/* Logo */}
-				<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+				<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary border border-border flex items-center justify-center flex-shrink-0 overflow-hidden">
 					<Image
 						src={experience.logo}
 						alt={`${experience.company} logo`}
@@ -143,7 +140,7 @@ const ExperienceItem = ({
 				<div className="flex-grow min-w-0">
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
 						<div className="flex items-center gap-2 overflow-hidden">
-							<h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
+							<h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-muted-foreground transition-colors truncate">
 								{experience.company}
 							</h3>
 							<div className="flex items-center gap-2">
@@ -151,7 +148,7 @@ const ExperienceItem = ({
 									<a
 										key={`${experience.id}-${link.type}`}
 										href={link.url}
-										className="text-zinc-500 hover:text-white transition-colors p-1"
+										className="text-muted-foreground hover:text-foreground transition-colors p-1"
 										onClick={(e) => e.stopPropagation()}
 										aria-label={`${link.type} link for ${experience.company}`}
 									>
@@ -220,7 +217,7 @@ const ExperienceItem = ({
 								)}
 
 								<div
-									className="text-zinc-600 group-hover:text-white transition-transform duration-200 ml-1"
+									className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 ml-1"
 									style={{
 										transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
 									}}
@@ -243,14 +240,18 @@ const ExperienceItem = ({
 								</div>
 							</div>
 						</div>
-						<span className="text-sm text-zinc-500 font-medium whitespace-nowrap">
+						<span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
 							{experience.period}
 						</span>
 					</div>
 
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-						<h4 className="text-zinc-400 font-medium">{experience.role}</h4>
-						<span className="text-sm text-zinc-600">{experience.location}</span>
+						<h4 className="text-muted-foreground font-medium">
+							{experience.role}
+						</h4>
+						<span className="text-sm text-muted-foreground">
+							{experience.location}
+						</span>
 					</div>
 
 					{/* Expanded Content */}
@@ -258,14 +259,14 @@ const ExperienceItem = ({
 						<div className="mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
 							{experience.technologies && (
 								<div className="mb-8">
-									<h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
+									<h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
 										Technologies & Tools
 									</h5>
 									<div className="flex flex-wrap gap-2">
 										{experience.technologies.map((tech) => (
 											<div
 												key={`${experience.id}-${tech.name}`}
-												className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 transition-colors"
+												className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary border border-border hover:border-foreground/20 transition-colors"
 											>
 												<Image
 													src={tech.icon}
@@ -275,7 +276,7 @@ const ExperienceItem = ({
 													className="w-3.5 h-3.5 opacity-80"
 													unoptimized
 												/>
-												<span className="text-xs text-zinc-300">
+												<span className="text-xs text-foreground/80">
 													{tech.name}
 												</span>
 											</div>
@@ -289,9 +290,9 @@ const ExperienceItem = ({
 									{experience.description.map((point, i) => (
 										<li
 											key={`${experience.id}-desc-${i}`}
-											className="text-zinc-400 text-sm leading-relaxed flex gap-3"
+											className="text-muted-foreground/80 text-sm leading-relaxed flex gap-3"
 										>
-											<span className="text-zinc-700 mt-1.5 flex-shrink-0">
+											<span className="text-foreground mt-1.5 flex-shrink-0">
 												▪
 											</span>
 											{point}
@@ -315,8 +316,10 @@ const ExperienceSection = () => {
 	return (
 		<div id="experience" className="mt-5 w-full scroll-mt-24">
 			<div className="mb-12">
-				<h4 className="text-sm font-medium text-zinc-500 mb-1">Featured</h4>
-				<h2 className="text-4xl font-bold text-white tracking-tight">
+				<h4 className="text-sm font-medium text-muted-foreground mb-1">
+					Featured
+				</h4>
+				<h2 className="text-4xl font-bold text-foreground tracking-tight">
 					Experience
 				</h2>
 			</div>
@@ -337,7 +340,7 @@ const ExperienceSection = () => {
 			<div className="mt-16 flex justify-center">
 				<button
 					type="button"
-					className="px-6 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+					className="px-6 py-2.5 rounded-xl bg-secondary border border-border text-muted-foreground text-sm font-medium hover:bg-secondary/80 hover:text-foreground transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
 				>
 					Show all work experiences
 				</button>

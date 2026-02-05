@@ -34,7 +34,7 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 	});
 
 	return (
-		<article className="max-w-4xl mx-auto py-26 px-6 text-black dark:text-zinc-100">
+		<article className="max-w-4xl mx-auto py-26 px-6 text-foreground">
 			<BlogPostHeader
 				title={frontmatter.title as string}
 				subtitle={frontmatter.subtitle as string}
@@ -42,7 +42,7 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 				tags={(frontmatter.tags as string[]) || []}
 				image={frontmatter.image as string}
 			/>
-			<div className="prose prose-zinc dark:prose-invert max-w-none prose-headings:text-black prose-p:text-black dark:prose-headings:text-zinc-100 dark:prose-p:text-zinc-400">
+			<div className="prose prose-zinc dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary">
 				{content}
 			</div>
 			<BlogCommentSection />

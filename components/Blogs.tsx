@@ -13,8 +13,12 @@ const Blogs = ({ posts }: BlogsProps) => {
 	return (
 		<div id="blogs" className="mt-20 w-full pb-20 scroll-mt-24">
 			<div className="mb-12 text-left">
-				<h4 className="text-sm font-medium text-zinc-500 mb-1">Featured</h4>
-				<h2 className="text-4xl font-bold text-white tracking-tight">Blogs</h2>
+				<h4 className="text-sm font-medium text-muted-foreground mb-1">
+					Featured
+				</h4>
+				<h2 className="text-4xl font-bold text-foreground tracking-tight">
+					Blogs
+				</h2>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -22,7 +26,7 @@ const Blogs = ({ posts }: BlogsProps) => {
 					<article
 						key={post.title}
 						onClick={() => router.push(`/blog/${post.slug}`)}
-						className="group bg-[#0c0c0e] border border-zinc-800/50 rounded-3xl overflow-hidden flex flex-col transition-all hover:border-zinc-700/50 hover:shadow-2xl hover:shadow-white/[0.01]"
+						className="group bg-card border border-border/50 rounded-3xl overflow-hidden flex flex-col transition-all hover:border-border hover:shadow-2xl hover:shadow-foreground/[0.01]"
 					>
 						<div
 							className="h-56 w-full relative overflow-hidden"
@@ -34,10 +38,10 @@ const Blogs = ({ posts }: BlogsProps) => {
 							}}
 						></div>
 						<div className="p-8 flex flex-col flex-grow text-left">
-							<h3 className="text-2xl font-bold text-white mb-4 group-hover:text-zinc-300 transition-colors leading-tight">
+							<h3 className="text-2xl font-bold text-foreground mb-4 group-hover:text-muted-foreground transition-colors leading-tight">
 								{post.title}
 							</h3>
-							<p className="text-zinc-400 text-sm leading-relaxed mb-6">
+							<p className="text-muted-foreground text-sm leading-relaxed mb-6">
 								{post.description}
 							</p>
 
@@ -45,7 +49,7 @@ const Blogs = ({ posts }: BlogsProps) => {
 								{post.tag.map((tag: string) => (
 									<span
 										key={tag}
-										className="px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-400"
+										className="px-3 py-1 rounded-lg bg-secondary border border-border text-[11px] font-medium text-muted-foreground"
 									>
 										{tag}
 									</span>
@@ -53,7 +57,7 @@ const Blogs = ({ posts }: BlogsProps) => {
 							</div>
 
 							<div className="mt-auto flex items-center justify-between">
-								<div className="flex items-center gap-2 text-zinc-500 text-[13px]">
+								<div className="flex items-center gap-2 text-muted-foreground text-[13px]">
 									<svg
 										className="w-4 h-4"
 										fill="none"
@@ -72,7 +76,7 @@ const Blogs = ({ posts }: BlogsProps) => {
 								</div>
 								<a
 									href={`/blog/${post.slug}`}
-									className="flex items-center gap-2 text-[13px] font-semibold text-zinc-400 hover:text-white transition-all group/link"
+									className="flex items-center gap-2 text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-all group/link"
 								>
 									Read More
 									<svg
@@ -98,7 +102,7 @@ const Blogs = ({ posts }: BlogsProps) => {
 			<div className="mt-12 flex justify-center">
 				<button
 					type="button"
-					className="px-6 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+					className="px-6 py-2.5 rounded-xl bg-secondary border border-border text-muted-foreground text-sm font-medium hover:bg-secondary/80 hover:text-foreground transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
 				>
 					Show all blogs
 				</button>

@@ -7,7 +7,7 @@ const ProfileCard = () => {
 		<div className="pt-10 flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left sm:gap-10">
 			{/* Avatar Container */}
 			<div className="relative flex-shrink-0 mb-6 sm:mb-0">
-				<div className="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] rounded-2xl bg-[#ffeb3b] overflow-hidden flex items-center justify-center border-4 border-[#121212]">
+				<div className="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] rounded-2xl bg-[#ffeb3b] overflow-hidden flex items-center justify-center border-4 border-primary/10">
 					<Image
 						src="/arindam.JPG"
 						alt="Arindam Roy Avatar"
@@ -24,17 +24,17 @@ const ProfileCard = () => {
 
 			{/* Info Container */}
 			<div className="flex-grow">
-				<h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
+				<h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
 					Arindam Roy
 				</h1>
-				<p className="text-zinc-400 text-lg leading-relaxed max-w-xl mb-8">
+				<p className="text-muted-foreground text-lg leading-relaxed max-w-xl mb-8">
 					I&apos;m a Full Stack web developer and Open Source Contributor, I
 					love building products to solve real-world problems. I&apos;m
 					specialized in building MVP&apos;s.
 				</p>
 
 				<div>
-					<h3 className="text-sm font-medium text-zinc-500 uppercase tracking-widest mb-4">
+					<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
 						Skills
 					</h3>
 					<div className="flex flex-wrap gap-4 items-center">
@@ -61,7 +61,7 @@ const ProfileCard = () => {
 							src="https://cdn.simpleicons.org/rust/ffffff"
 							width={24}
 							height={24}
-							className="h-6 w-auto"
+							className="h-6 w-auto dark:invert-0 invert"
 							alt="Rust"
 							unoptimized
 						/>
@@ -78,7 +78,7 @@ const ProfileCard = () => {
 							src="https://cdn.simpleicons.org/nextdotjs/FFFFFF"
 							width={24}
 							height={24}
-							className="h-6 w-auto"
+							className="h-6 w-auto dark:invert-0 invert"
 							alt="Next.js"
 							unoptimized
 						/>
