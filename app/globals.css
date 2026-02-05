@@ -1,26 +1,150 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer theme {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 255 255 255;
+    --foreground: 24 24 27;
+
+    --card: 255 255 255;
+    --card-foreground: 24 24 27;
+
+    --popover: 255 255 255;
+    --popover-foreground: 24 24 27;
+
+    --primary: 24 24 27;
+    --primary-foreground: 250 250 250;
+
+    --secondary: 244 244 245;
+    --secondary-foreground: 24 24 27;
+
+    --muted: 244 244 245;
+    --muted-foreground: 113 113 122;
+
+    --accent: 244 244 245;
+    --accent-foreground: 24 24 27;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 250 250 250;
+
+    --border: 228 228 231;
+    --input: 228 228 231;
+    --ring: 24 24 27;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 9 9 11;
+    --foreground: 250 250 250;
+
+    --card: 9 9 11;
+    --card-foreground: 250 250 250;
+
+    --popover: 9 9 11;
+    --popover-foreground: 250 250 250;
+
+    --primary: 250 250 250;
+    --primary-foreground: 24 24 27;
+
+    --secondary: 39 39 42;
+    --secondary-foreground: 250 250 250;
+
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
+
+    --accent: 39 39 42;
+    --accent-foreground: 250 250 250;
+
+    --destructive: 127 29 29;
+    --destructive-foreground: 250 250 250;
+
+    --border: 39 39 42;
+    --input: 39 39 42;
+    --ring: 212 212 216;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  
+  --animate-in: animate-in 0.2s ease-out;
+  --animate-out: animate-out 0.2s ease-in;
 }
+
+html, body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--muted-foreground) / 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted-foreground) / 0.5);
+}
+
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
+  line-height: 1.7;
+  font-size: 0.925rem;
+}
+
+pre > code {
+  background-color: transparent !important;
+  display: grid;
+}
+
+p{
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+span[style*="color:#FF7B72"], span[style*="color:#ff7b72"] { color: #f97583 !important; } /* keywords */
+span[style*="color:#79C0FF"], span[style*="color:#79c0ff"] { color: #79c0ff !important; } /* functions */
+span[style*="color:#A5D6FF"], span[style*="color:#a5d6ff"] { color: #a5d6ff !important; } 
