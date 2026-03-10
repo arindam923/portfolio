@@ -12,7 +12,8 @@ import {
 	Briefcase,
 	User,
 	Github,
-	X,
+	ArrowRight,
+	Command as CommandIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -25,36 +26,12 @@ export interface CommandMenuProps {
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 	const { setTheme } = useTheme();
 	const router = useRouter();
-	const [isVisible, setIsVisible] = React.useState(false);
-	const [isAnimating, setIsAnimating] = React.useState(false);
-
-	// Handle open/close animations
-	React.useEffect(() => {
-		if (open) {
-			setIsVisible(true);
-			// Small delay to trigger CSS transition
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					setIsAnimating(true);
-				});
-			});
-		} else {
-			setIsAnimating(false);
-			const timer = setTimeout(() => {
-				setIsVisible(false);
-			}, 200); // Match transition duration
-			return () => clearTimeout(timer);
-		}
-	}, [open]);
 
 	React.useEffect(() => {
 		const down = (e: KeyboardEvent) => {
 			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
 				onOpenChange(!open);
-			}
-			if (e.key === "Escape") {
-				onOpenChange(false);
 			}
 		};
 
@@ -70,252 +47,140 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 		[onOpenChange],
 	);
 
-	if (!isVisible) return null;
+	if (!open) return null;
 
 	return (
-		<div className="fixed inset-0 z-[100] overflow-hidden">
-			{/* Backdrop with smooth transition */}
-			<button
-				type="button"
-				aria-label="Close command menu"
-				className="fixed inset-0 transition-all duration-200 ease-out cursor-default border-none outline-none"
-				style={{
-					backgroundColor: isAnimating
-						? "rgba(0, 0, 0, 0.6)"
-						: "rgba(0, 0, 0, 0)",
-					backdropFilter: isAnimating ? "blur(8px)" : "blur(0px)",
-					WebkitBackdropFilter: isAnimating ? "blur(8px)" : "blur(0px)",
-				}}
+		<div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
+			{/* Backdrop */}
+			<div
 				onClick={() => onOpenChange(false)}
+				className="fixed inset-0 bg-black/40 backdrop-blur-sm"
 			/>
 
-			{/* Modal container with page slide effect */}
-			<div
-				className="fixed inset-0 flex items-start justify-center transition-all duration-200 ease-out"
-				style={{
-					paddingTop: isAnimating ? "15vh" : "12vh",
-					opacity: isAnimating ? 1 : 0,
-				}}
-			>
-				<Command
-					className="relative w-[90%] max-w-[560px] overflow-hidden transition-all duration-200 ease-out"
-					style={{
-						transform: isAnimating
-							? "scale(1) translateY(0)"
-							: "scale(0.96) translateY(-10px)",
-						borderRadius: "16px",
-						backgroundColor: "rgb(var(--popover))",
-						border: "1px solid rgb(var(--border))",
-						boxShadow: isAnimating
-							? "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)"
-							: "0 10px 25px -5px rgba(0, 0, 0, 0.2)",
-					}}
-					loop
-				>
-					{/* Search input area */}
-					<div
-						className="flex items-center gap-3 px-4 py-4"
-						style={{
-							borderBottom: "1px solid rgb(var(--border))",
-						}}
-					>
-						<Search
-							className="shrink-0 transition-colors"
-							style={{
-								width: "18px",
-								height: "18px",
-								color: "rgb(var(--muted-foreground))",
-							}}
-						/>
+			{/* Command Palette */}
+			<div className="relative w-[90%] max-w-[560px] overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+				<Command className="relative flex flex-col h-full" loop>
+					{/* Header / Search */}
+					<div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-900 bg-zinc-950">
+						<Search className="w-5 h-5 text-zinc-500" />
 						<Command.Input
-							className="flex-1 bg-transparent outline-none placeholder:transition-colors"
-							style={{
-								fontSize: "15px",
-								fontWeight: 400,
-								fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-								letterSpacing: "-0.01em",
-								color: "rgb(var(--foreground))",
-							}}
-							placeholder="Search commands, pages, actions..."
+							className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-base font-medium"
+							placeholder="Type a command or search..."
 							autoFocus
 						/>
-						<button
-							onClick={() => onOpenChange(false)}
-							className="shrink-0 p-1 rounded-md transition-all hover:scale-110"
-							style={{
-								color: "rgb(var(--muted-foreground))",
-							}}
-							type="button"
-						>
-							<X style={{ width: "16px", height: "16px" }} />
-						</button>
+						<div className="flex items-center px-2 py-1 rounded bg-zinc-900 border border-zinc-800">
+							<span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+								ESC
+							</span>
+						</div>
 					</div>
 
-					{/* Command list */}
-					<Command.List
-						className="overflow-y-auto overflow-x-hidden"
-						style={{
-							maxHeight: "360px",
-							padding: "8px",
-						}}
-					>
-						<Command.Empty
-							className="flex flex-col items-center justify-center gap-2"
-							style={{
-								padding: "32px 16px",
-								color: "rgb(var(--muted-foreground))",
-							}}
-						>
-							<Search style={{ width: "32px", height: "32px", opacity: 0.4 }} />
-							<span style={{ fontSize: "14px", fontWeight: 500 }}>
-								No results found
-							</span>
-							<span style={{ fontSize: "12px", opacity: 0.7 }}>
-								Try searching for something else
-							</span>
+					{/* Content */}
+					<Command.List className="max-h-[380px] overflow-y-auto p-2 scrollbar-hide focus:outline-none bg-zinc-950">
+						<Command.Empty className="py-12 flex flex-col items-center justify-center text-zinc-500">
+							<div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-zinc-600">
+								<Search className="w-6 h-6" />
+							</div>
+							<p className="text-sm font-medium">No results found.</p>
 						</Command.Empty>
 
-						{/* Navigation Group */}
-						<Command.Group>
-							<div
-								style={{
-									padding: "8px 12px 6px",
-									fontSize: "11px",
-									fontWeight: 600,
-									textTransform: "uppercase",
-									letterSpacing: "0.05em",
-									color: "rgb(var(--muted-foreground))",
-									opacity: 0.7,
-								}}
-							>
-								Navigation
-							</div>
+						<CommandGroup heading="Navigation">
 							<CommandItem
 								onSelect={() => runCommand(() => router.push("/"))}
-								icon={<User />}
+								icon={<User className="w-4 h-4" />}
 								label="Home"
 								shortcut="G H"
 							/>
 							<CommandItem
 								onSelect={() => runCommand(() => router.push("/#experience"))}
-								icon={<Briefcase />}
+								icon={<Briefcase className="w-4 h-4" />}
 								label="Work Experience"
 								shortcut="G W"
 							/>
 							<CommandItem
 								onSelect={() => runCommand(() => router.push("/#projects"))}
-								icon={<Monitor />}
+								icon={<Monitor className="w-4 h-4" />}
 								label="Projects"
 								shortcut="G P"
 							/>
 							<CommandItem
 								onSelect={() => runCommand(() => router.push("/#blogs"))}
-								icon={<FileText />}
+								icon={<FileText className="w-4 h-4" />}
 								label="Blog Posts"
 								shortcut="G B"
 							/>
-						</Command.Group>
+						</CommandGroup>
 
-						{/* Separator */}
-						<div
-							style={{
-								height: "1px",
-								backgroundColor: "rgb(var(--border))",
-								margin: "8px 12px",
-								opacity: 0.5,
-							}}
-						/>
+						<div className="h-px bg-zinc-900 my-2 mx-2" />
 
-						{/* Theme Group */}
-						<Command.Group>
-							<div
-								style={{
-									padding: "8px 12px 6px",
-									fontSize: "11px",
-									fontWeight: 600,
-									textTransform: "uppercase",
-									letterSpacing: "0.05em",
-									color: "rgb(var(--muted-foreground))",
-									opacity: 0.7,
-								}}
-							>
-								Theme
-							</div>
+						<CommandGroup heading="Theme">
 							<CommandItem
 								onSelect={() => runCommand(() => setTheme("light"))}
-								icon={<Sun />}
+								icon={<Sun className="w-4 h-4" />}
 								label="Light Mode"
 							/>
 							<CommandItem
 								onSelect={() => runCommand(() => setTheme("dark"))}
-								icon={<Moon />}
+								icon={<Moon className="w-4 h-4" />}
 								label="Dark Mode"
 							/>
 							<CommandItem
 								onSelect={() => runCommand(() => setTheme("system"))}
-								icon={<Laptop />}
+								icon={<Laptop className="w-4 h-4" />}
 								label="System Default"
 							/>
-						</Command.Group>
+						</CommandGroup>
 
-						{/* Separator */}
-						<div
-							style={{
-								height: "1px",
-								backgroundColor: "rgb(var(--border))",
-								margin: "8px 12px",
-								opacity: 0.5,
-							}}
-						/>
+						<div className="h-px bg-zinc-900 my-2 mx-2" />
 
-						{/* Socials Group */}
-						<Command.Group>
-							<div
-								style={{
-									padding: "8px 12px 6px",
-									fontSize: "11px",
-									fontWeight: 600,
-									textTransform: "uppercase",
-									letterSpacing: "0.05em",
-									color: "rgb(var(--muted-foreground))",
-									opacity: 0.7,
-								}}
-							>
-								Socials
-							</div>
+						<CommandGroup heading="Socials">
 							<CommandItem
 								onSelect={() =>
 									runCommand(() =>
-										window.open("https://github.com/Arindam200", "_blank"),
+										window.open("https://github.com/arindam923", "_blank"),
 									)
 								}
-								icon={<Github />}
+								icon={<Github className="w-4 h-4" />}
 								label="GitHub Profile"
 								shortcut="↗"
 							/>
-						</Command.Group>
+						</CommandGroup>
 					</Command.List>
 
-					{/* Footer with keyboard hints */}
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							padding: "10px 16px",
-							borderTop: "1px solid rgb(var(--border))",
-							backgroundColor: "rgb(var(--muted) / 0.3)",
-						}}
-					>
-						<div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+					{/* Footer */}
+					<div className="flex items-center justify-between px-5 py-3 border-t border-zinc-900 bg-zinc-950 text-zinc-500">
+						<div className="flex items-center gap-4">
 							<KeyboardHint keys={["↑", "↓"]} label="Navigate" />
 							<KeyboardHint keys={["↵"]} label="Select" />
-							<KeyboardHint keys={["Esc"]} label="Close" />
+						</div>
+						<div className="flex items-center gap-2 text-[11px] font-medium tracking-tight">
+							<CommandIcon className="w-3 h-3" />
+							<span>Command Menu</span>
 						</div>
 					</div>
 				</Command>
 			</div>
 		</div>
+	);
+}
+
+function CommandGroup({
+	heading,
+	children,
+}: {
+	heading: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<Command.Group
+			heading={
+				<div className="px-3 py-2 text-xs font-semibold text-zinc-500 uppercase font-mono tracking-widest mb-1">
+					{heading}
+				</div>
+			}
+		>
+			{children}
+		</Command.Group>
 	);
 }
 
@@ -332,133 +197,42 @@ function CommandItem({
 }) {
 	return (
 		<Command.Item
-			className="group"
-			style={{
-				display: "flex",
-				alignItems: "center",
-				gap: "12px",
-				padding: "10px 12px",
-				margin: "2px 0",
-				borderRadius: "10px",
-				cursor: "pointer",
-				transition: "all 0.15s ease",
-				outline: "none",
-			}}
 			onSelect={onSelect}
+			className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer aria-selected:bg-zinc-900 aria-selected:border-zinc-800 transition-colors duration-150 outline-none border border-transparent"
 		>
-			{/* Icon container */}
-			<div
-				className="group-aria-selected:scale-110"
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					width: "32px",
-					height: "32px",
-					borderRadius: "8px",
-					backgroundColor: "rgb(var(--secondary))",
-					color: "rgb(var(--muted-foreground))",
-					transition: "all 0.15s ease",
-				}}
-			>
-				<span
-					style={{
-						width: "16px",
-						height: "16px",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-					}}
-				>
-					{icon}
-				</span>
+			<div className="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 group-aria-selected:text-white transition-colors">
+				{icon}
 			</div>
 
-			{/* Label */}
-			<span
-				className="group-aria-selected:text-foreground"
-				style={{
-					flex: 1,
-					fontSize: "14px",
-					fontWeight: 500,
-					fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-					letterSpacing: "-0.01em",
-					color: "rgb(var(--foreground) / 0.8)",
-					transition: "color 0.15s ease",
-				}}
-			>
+			<span className="flex-1 text-sm font-medium text-zinc-400 group-aria-selected:text-white transition-colors">
 				{label}
 			</span>
 
-			{/* Keyboard shortcut */}
-			{shortcut && (
-				<span
-					className="group-aria-selected:opacity-100"
-					style={{
-						fontSize: "11px",
-						fontWeight: 500,
-						fontFamily: "monospace",
-						padding: "3px 6px",
-						borderRadius: "4px",
-						backgroundColor: "rgb(var(--secondary))",
-						color: "rgb(var(--muted-foreground))",
-						opacity: 0.6,
-						transition: "opacity 0.15s ease",
-					}}
-				>
+			{shortcut ? (
+				<span className="text-[11px] font-mono text-zinc-600 group-aria-selected:text-zinc-500 transition-colors">
 					{shortcut}
 				</span>
+			) : (
+				<ArrowRight className="w-4 h-4 text-zinc-700 group-aria-selected:text-zinc-500 opacity-0 group-aria-selected:opacity-100 transition-all transform translate-x-1 group-aria-selected:translate-x-0" />
 			)}
-
-			{/* Selection indicator styles via CSS */}
-			<style jsx>{`
-				:global([cmdk-item][aria-selected="true"]) {
-					background: linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--secondary)) 100%) !important;
-					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-				}
-				:global([cmdk-item][aria-selected="true"]) > div:first-child {
-					background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary) / 0.8) 100%) !important;
-					color: rgb(var(--primary-foreground)) !important;
-				}
-			`}</style>
 		</Command.Item>
 	);
 }
 
 function KeyboardHint({ keys, label }: { keys: string[]; label: string }) {
 	return (
-		<div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-			<div style={{ display: "flex", gap: "3px" }}>
+		<div className="flex items-center gap-2">
+			<div className="flex gap-1">
 				{keys.map((key) => (
 					<kbd
 						key={key}
-						style={{
-							display: "inline-flex",
-							alignItems: "center",
-							justifyContent: "center",
-							minWidth: "20px",
-							height: "20px",
-							padding: "0 5px",
-							fontSize: "10px",
-							fontWeight: 500,
-							fontFamily: "system-ui, -apple-system, sans-serif",
-							backgroundColor: "rgb(var(--secondary))",
-							color: "rgb(var(--muted-foreground))",
-							borderRadius: "4px",
-							border: "1px solid rgb(var(--border))",
-						}}
+						className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded border border-zinc-800 bg-zinc-900 text-[10px] font-medium text-zinc-500 font-mono"
 					>
 						{key}
 					</kbd>
 				))}
 			</div>
-			<span
-				style={{
-					fontSize: "11px",
-					color: "rgb(var(--muted-foreground))",
-					opacity: 0.7,
-				}}
-			>
+			<span className="text-xs font-mono tracking-widest uppercase text-zinc-600">
 				{label}
 			</span>
 		</div>

@@ -1,9 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { fadeInUp, staggerContainer } from "@/lib/framer";
 import Image from "next/image";
-import { MessageCircleCode, Heart, Share } from "lucide-react";
+import { Heart, Share, Calendar } from "lucide-react";
 
 interface BlogPostHeaderProps {
 	title: string;
@@ -21,117 +19,67 @@ export function BlogPostHeader({
 	image,
 }: BlogPostHeaderProps) {
 	return (
-		<motion.header
-			className="mb-12"
-			variants={staggerContainer}
-			initial="initial"
-			animate="animate"
-		>
-			<motion.div className="w-full h-[500px] relative mb-12">
-				<Image
-					className="object-cover rounded-lg"
-					src={image as string}
-					fill
-					alt=""
-				/>
-			</motion.div>
-			<motion.div className="flex flex-wrap gap-2 mb-6" variants={fadeInUp}>
-				{tags.map((tag, index) => (
-					<motion.span
-						key={tag}
-						initial={{ opacity: 0, scale: 0.8 }}
-						animate={{ opacity: 1, scale: 1 }}
-						transition={{
-							delay: 0.4 + index * 0.05,
-							type: "spring",
-							stiffness: 200,
-						}}
-						whileHover={{ scale: 1.05 }}
-						className="px-3 py-1 rounded-full bg-secondary border border-border text-xs font-medium text-muted-foreground cursor-default hover:bg-muted transition-colors"
-					>
-						{tag}
-					</motion.span>
-				))}
-			</motion.div>
+		<header className="mb-12 mt-16 md:mt-24">
+			<div className="flex items-center gap-3 text-zinc-500 font-mono text-sm mb-6">
+				<Calendar className="w-4 h-4" />
+				<time>{date}</time>
+				<span className="text-zinc-700 mx-2">/</span>
+				<span>4 min read</span>
+			</div>
 
-			<motion.h1
-				className="text-4xl sm:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight"
-				variants={fadeInUp}
-				transition={{ delay: 0.2 }}
-			>
+			<h1 className="text-3xl sm:text-5xl font-semibold text-white mb-6 tracking-tight leading-[1.1]">
 				{title}
-			</motion.h1>
+			</h1>
 
-			<motion.p
-				className="text-xl text-muted-foreground mb-8 leading-relaxed"
-				variants={fadeInUp}
-				transition={{ delay: 0.3 }}
-			>
-				{subtitle}
-			</motion.p>
+			{subtitle && (
+				<p className="text-lg md:text-xl text-zinc-400 mb-8 leading-relaxed max-w-2xl font-medium">
+					{subtitle}
+				</p>
+			)}
 
-			<motion.div
-				className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-8 border-t border-border/50"
-				variants={fadeInUp}
-				transition={{ delay: 0.4 }}
-			>
-				<div className="flex items-center gap-3 text-muted-foreground">
-					<svg
-						className="w-5 h-5"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						role="img"
-						aria-hidden="true"
-					>
-						<title>Calendar icon</title>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-						/>
-					</svg>
-					<span>{date}</span>
-					<span className="text-muted-foreground/50">•</span>
-					<span>4 min read</span>
+			<div className="flex items-center justify-between py-6 border-y border-zinc-800/80 mb-10">
+				<div className="flex flex-wrap gap-2">
+					{tags.map((tag) => (
+						<span
+							key={tag}
+							className="px-2.5 py-1 text-xs font-medium text-zinc-400 bg-zinc-900 border border-zinc-800 rounded-lg cursor-default"
+						>
+							{tag}
+						</span>
+					))}
 				</div>
 
 				<div className="flex items-center gap-3">
-					{[
-						{ icon: "heart", count: "167", fill: true },
-						{ icon: "clap", count: "166", fill: true },
-					].map((item, index) => (
-						<motion.button
-							key={item.icon}
-							type="button"
-							whileHover={{ scale: 1.05, y: -2 }}
-							whileTap={{ scale: 0.95 }}
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: 0.5 + index * 0.1 }}
-							className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-						>
-							{item.icon === "heart" && <Heart />}
-							{item.icon === "clap" && <MessageCircleCode />}
-							{item.count}
-						</motion.button>
-					))}
-
-					<motion.button
+					<button
 						type="button"
-						whileHover={{ scale: 1.05, y: -2 }}
-						whileTap={{ scale: 0.95 }}
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.8 }}
-						className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+						className="flex items-center justify-center w-10 h-10 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+						title="Like"
 					>
-						<Share />
-						Share
-					</motion.button>
+						<Heart className="w-4 h-4" />
+					</button>
+					<button
+						type="button"
+						className="flex items-center justify-center w-10 h-10 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+						title="Share"
+					>
+						<Share className="w-4 h-4" />
+					</button>
 				</div>
-			</motion.div>
-		</motion.header>
+			</div>
+
+			{image && (
+				<div className="w-full aspect-[2/1] relative mb-12 rounded-3xl overflow-hidden border border-zinc-800/80 bg-zinc-900">
+					<div className="absolute inset-0 bg-black/5 z-10" />
+					<Image
+						className="object-cover"
+						src={image}
+						fill
+						alt={title}
+						priority
+						unoptimized
+					/>
+				</div>
+			)}
+		</header>
 	);
 }

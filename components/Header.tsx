@@ -59,13 +59,13 @@ const Header = () => {
 								Work
 							</Link>
 							<Link
-								href="/#blogs"
+								href="/blog"
 								className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
 							>
 								Blogs
 							</Link>
 							<Link
-								href="/#projects"
+								href="/project"
 								className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
 							>
 								Projects
@@ -89,7 +89,15 @@ const Header = () => {
 
 						{/* Theme Toggle */}
 						<button
-							onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+							onClick={() => {
+								if (!document.startViewTransition) {
+									setTheme(theme === "dark" ? "light" : "dark");
+									return;
+								}
+								document.startViewTransition(() => {
+									setTheme(theme === "dark" ? "light" : "dark");
+								});
+							}}
 							type="button"
 							className="p-2 rounded-xl bg-secondary/50 border border-input text-muted-foreground hover:text-foreground hover:border-ring/20 transition-all"
 							aria-label="Toggle theme"
