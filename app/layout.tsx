@@ -44,7 +44,7 @@ export const metadata: Metadata = {
       "Full Stack Web Developer & Open Source Contributor. Building scalable web applications and exploring new technologies.",
     images: [
       {
-        url: "/opengraph.png",
+        url: "/opengraph.jpg",
         width: 1200,
         height: 630,
         alt: "Arindam Roy - Full Stack Developer",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
       "Arindam Roy | Full Stack Developer & Open Source Contributor",
     description:
       "Full Stack Web Developer & Open Source Contributor. Building scalable web applications.",
-    images: ["/opengraph.png"],
+    images: ["/opengraph.jpg"],
     creator: "@ramxcodes",
   },
   robots: {
