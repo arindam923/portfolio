@@ -42,7 +42,7 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 				tags={(frontmatter.tags as string[]) || []}
 				image={frontmatter.image as string}
 			/>
-			<div className="prose prose-zinc prose-invert max-w-none prose-headings:text-white prose-headings:font-semibold prose-headings:tracking-tight prose-p:text-zinc-400 prose-p:leading-relaxed prose-strong:text-zinc-200 prose-a:text-zinc-300 hover:prose-a:text-white prose-a:transition-colors prose-li:text-zinc-400">
+			<div className="max-w-none">
 				{content}
 			</div>
 			<BlogCommentSection />

@@ -9,87 +9,10 @@ import {
 	Linkedin,
 	ChevronDown,
 } from "lucide-react";
+import { experiences } from "@/lib/experience-data";
+import type { ExperienceEntry } from "@/lib/experience-data";
 
-interface Experience {
-	id: string;
-	company: string;
-	role: string;
-	period: string;
-	location: string;
-	logo: string;
-	status?: string;
-	links?: { type: "globe" | "x" | "github" | "linkedin"; url: string }[];
-	technologies?: { name: string; icon: string }[];
-	description?: string[];
-}
-
-const experiences: Experience[] = [
-	{
-		id: "1",
-		company: "Promote.fun",
-		role: "Founding Engineer",
-		period: "2025 - Present",
-		location: "Remote",
-		logo: "https://promote.fun/logo/logo_green.png",
-		status: "Current",
-		links: [{ type: "globe", url: "https://www.promote.fun" }],
-		technologies: [
-			{ name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/FFFFFF" },
-			{
-				name: "Tailwind CSS",
-				icon: "https://cdn.simpleicons.org/tailwindcss/06B6D4",
-			},
-			{
-				name: "TypeScript",
-				icon: "https://cdn.simpleicons.org/typescript/3178C6",
-			},
-			{ name: "React", icon: "https://cdn.simpleicons.org/react/61DAFB" },
-			{ name: "Figma", icon: "https://cdn.simpleicons.org/figma/F24E1E" },
-			{ name: "Bun", icon: "https://cdn.simpleicons.org/bun/FBF0DF" },
-		],
-		description: [
-			"Architected and developed the complete frontend infrastructure for the platform, a comprehensive solution for creating and managing promotional campaigns.",
-			"Led a comprehensive codebase refactoring initiative that improved maintainability, scalability, and development velocity across the entire platform.",
-			"Integrated and optimized backend API connections, implementing efficient data fetching strategies and error handling mechanisms.",
-		],
-	},
-	{
-		id: "2",
-		company: "Paisadekho",
-		role: "Senior Full stack Engineer",
-		period: "2024 - 2024",
-		location: "Jaipur, India",
-		logo: "https://www.paisadekho.com/images/Header_New.svg",
-		links: [
-			{ type: "globe", url: "#" },
-			{ type: "github", url: "#" },
-		],
-	},
-	{
-		id: "3",
-		company: "Gululu Coin",
-		role: "Senior Full-Stack Developer",
-		period: "2024 - 2025",
-		location: "Remote",
-		logo: "https://swap.gululu.in/logo.png",
-		links: [
-			{ type: "globe", url: "#" },
-			{ type: "github", url: "#" },
-		],
-	},
-	{
-		id: "4",
-		company: "Trupay",
-		role: "Full Stack Developer",
-		period: "2023 - 2024",
-		location: "Delhi, India",
-		logo: "https://trupay.com/wp-content/uploads/2025/07/images.png",
-		links: [
-			{ type: "globe", url: "#" },
-			{ type: "github", url: "#" },
-		],
-	},
-];
+type Experience = ExperienceEntry;
 
 const ExperienceItem = ({
 	experience,
@@ -121,7 +44,6 @@ const ExperienceItem = ({
 					: "bg-zinc-950/40 border border-zinc-800/80 hover:border-zinc-700/80 hover:bg-zinc-950/80"
 			}`}
 			onClick={(e) => {
-				// Don't toggle if clicking on a link inside the expanded area
 				if ((e.target as HTMLElement).closest("a")) return;
 				onToggle();
 			}}
@@ -130,7 +52,6 @@ const ExperienceItem = ({
 			role="button"
 			aria-expanded={isExpanded}
 		>
-			{/* Header (Always Visible) */}
 			<div
 				className={`flex flex-col sm:flex-row sm:items-start justify-between gap-4 relative z-10 transition-all duration-500 ${
 					isExpanded

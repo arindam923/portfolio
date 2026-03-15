@@ -1,0 +1,271 @@
+---
+    title: "Designing a system that handled 30 million records a day"
+    subtitle: "From a lonely EC2 instance to processing 30M records daily with serverless architecture"
+    date: "March 15, 2026"
+    tags: ["architecture","system design","aws","serverless"]
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+---
+
+
+<h1>Designing a System That Processes 30 Million Records Per Day</h1>
+
+<p>There are two types of "big data" stories.</p>
+
+<p>The first type is the **conference version**:</p>
+
+<blockquote>
+"We built a distributed system leveraging cutting-edge data technologies to process large-scale datasets."
+</blockquote>
+
+<p>The second type — the <strong>real one</strong> — usually starts with:</p>
+
+<blockquote>
+"Someone uploaded a 1GB file to an EC2 instance and we had to deal with it."
+</blockquote>
+
+<p>This is the second kind.</p>
+
+<p>Back in early 2023, we had to process <strong>tens of millions of financial records daily</strong>. The pipeline wasn't designed in a lab with pristine whiteboards and unlimited budgets. It evolved out of constraints, deadlines, and the occasional <em>"this absolutely cannot fail tomorrow morning"</em> message.</p>
+
+<p>The end result?<br />
+A system that reliably processed <strong>~30 million records per day</strong>.</p>
+
+<p>Let's walk through how it worked.</p>
+
+<h2>The Core Constraint</h2>
+
+<p>The incoming dataset arrived as a <strong>~1GB file</strong>.</p>
+
+<p>It would be uploaded manually to a <strong>shared EC2 instance</strong> by a partner organization.</p>
+
+<p>Not glamorous. Not event-driven. Just a file sitting there.</p>
+
+<p>So the first question was:</p>
+
+<blockquote>
+How do we turn a random file on an EC2 box into a reliable processing pipeline?
+</blockquote>
+
+<h2>Step 1: The Cron Job (Yes, Really)</h2>
+
+Every few minutes, a <strong>cron job</strong> ran on the EC2 instance.
+
+Its job was simple:
+
+<ul>
+<li>Check if a new file had been uploaded</li>
+<li>Download it locally</li>
+<li>Push it into an <strong>S3 bucket</strong></li>
+</ul>
+
+Cron jobs get a bad reputation in modern architecture discussions. But they are also <strong>extremely reliable</strong> and sometimes the simplest solution wins.
+
+Once the file landed in <strong>S3</strong>, the real pipeline started.
+
+<h2>Step 2: S3 Becomes the Trigger</h2>
+
+Uploading the file into S3 triggered two parallel workflows.
+
+This split was intentional:
+
+<ul>
+<li><strong>Analytics pipeline</strong></li>
+<li><strong>Processing pipeline</strong></li>
+</ul>
+
+Each had different performance requirements.
+
+<h2>Path A — Analytics Pipeline (Glue + Athena)</h2>
+
+The first path was designed to make the data <strong>queryable quickly</strong>.
+
+When the file arrived:
+
+<ul>
+<li>An <strong>S3 event trigger</strong> launched an <strong>AWS Glue job</strong></li>
+<li>The Glue job converted the raw dataset into <strong>Parquet format</strong></li>
+<li>The data became immediately queryable via <strong>Athena</strong></li>
+</ul>
+
+<StepHeader>Why Parquet?</StepHeader>
+
+Because querying raw CSV at scale is painful. Parquet reduces storage size and dramatically improves query performance.
+
+This meant analysts could run queries like:
+
+```sql
+SELECT COUNT(*) FROM transactions WHERE status='failed'
+```
+
+…without waiting for the entire processing pipeline to complete.
+
+In other words:
+
+<strong>Analytics became near-real-time.</strong>
+
+<h2>Path B — The Processing Pipeline</h2>
+
+The second pipeline handled the <strong>actual record processing</strong>.
+
+This was orchestrated using <strong>AWS Step Functions</strong>.
+
+The main challenge was simple:
+
+<ul>
+<li>~30 million records</li>
+<li>limited execution time</li>
+<li>Lambda constraints</li>
+<li>predictable throughput</li>
+</ul>
+
+We solved it with <strong>controlled parallelism</strong>.
+
+The dataset was split into batches.
+
+Each batch triggered <strong>Lambda workers</strong>.
+
+<StepHeader>Rough numbers looked something like this:</StepHeader>
+
+<ul>
+<li><strong>~250 Lambda functions</strong></li>
+<li>each processing <strong>~500 records</strong></li>
+<li>batches executed in parallel</li>
+<li>Step Functions orchestrated the flow</li>
+</ul>
+
+This approach had several advantages:
+
+<ul>
+<li><strong>Parallel scaling</strong></li>
+<li><strong>Failure isolation</strong></li>
+<li><strong>Retry support</strong></li>
+</ul>
+
+If one Lambda failed, Step Functions simply retried the batch instead of restarting the entire job.
+
+<h2>Why the Batch Size Mattered</h2>
+
+Lambda has a <strong>maximum execution window</strong>.
+
+At the time, keeping execution under <strong>15 minutes</strong> was critical.
+
+If we sent too many records per function, we risked timeouts.
+
+Too few records, and overhead would dominate.
+
+After testing multiple configurations, we settled on something close to:
+
+```text
+~500 records per Lambda
+~250 parallel workers
+```
+
+This gave us a good balance between:
+
+<ul>
+<li>throughput</li>
+<li>cost</li>
+<li>execution time</li>
+</ul>
+
+<h2>Throughput Math</h2>
+
+Roughly speaking:
+
+```text
+250 lambdas * 500 records
+= 125,000 records per batch wave
+```
+
+Multiple waves ran through the pipeline until the entire dataset finished processing.
+
+The system scaled horizontally without needing bigger machines.
+
+Just <strong>more workers</strong>.
+
+<h2>Observability (The Part People Forget)</h2>
+
+When you run hundreds of distributed workers, debugging becomes... interesting.
+
+So we leaned heavily on:
+
+<ul>
+<li><strong>CloudWatch logs</strong></li>
+<li>structured logging</li>
+<li>retry tracking</li>
+<li>Step Function execution traces</li>
+</ul>
+
+Without observability, distributed systems quickly become <strong>distributed confusion</strong>.
+
+<h2>Why This Architecture Worked</h2>
+
+Looking back, the system worked well because it respected a few simple principles:
+
+<h3>1. Use the Right Tool for Each Stage</h3>
+
+<ul>
+<li>S3 → storage and event trigger</li>
+<li>Glue → data transformation</li>
+<li>Athena → analytics</li>
+<li>Step Functions → orchestration</li>
+<li>Lambda → parallel compute</li>
+</ul>
+
+Each service did one job well.
+
+<h3>2. Embrace Parallelism</h3>
+
+Trying to process millions of records sequentially is a losing game.
+
+Parallel workers allowed us to process data at a scale that would otherwise require far larger infrastructure.
+
+<h3>3. Design for Failure</h3>
+
+In distributed systems, things <strong>will fail</strong>.
+
+Step Functions made retries straightforward and prevented the dreaded "restart everything" scenario.
+
+<h2>What I Would Do Differently Today</h2>
+
+This system was built in <strong>early 2023</strong>.
+
+If I redesigned it today, I might explore:
+
+<ul>
+<li><strong>AWS Batch</strong> for large compute jobs</li>
+<li><strong>Kafka / streaming ingestion</strong></li>
+<li><strong>Fargate workers instead of Lambda bursts</strong></li>
+<li><strong>Iceberg tables instead of plain Parquet</strong></li>
+</ul>
+
+But for the constraints we had at the time, the architecture held up surprisingly well.
+
+<h2>Final Thoughts</h2>
+
+Processing <strong>30 million records per day</strong> sounds intimidating.
+
+In reality, it's often just:
+
+<ul>
+<li>a file</li>
+<li>a bucket</li>
+<li>a few hundred workers</li>
+<li>and a lot of careful orchestration</li>
+</ul>
+
+The real challenge isn't writing code.
+
+It's designing systems that stay <strong>predictable under scale</strong>.
+
+And sometimes, it all starts with a <strong>cron job on a lonely EC2 instance</strong>.
+
+<Resource
+  title="AWS Serverless Patterns"
+  description="Collection of proven serverless architecture patterns for large-scale data processing"
+  href="https://aws.amazon.com/serverless/patterns/"
+/>
+
+If you're building similar pipelines or have opinions on better architectures, I'd love to hear them.
+
+The internet is full of strong opinions about distributed systems — and tech Twitter is rarely shy about sharing them.

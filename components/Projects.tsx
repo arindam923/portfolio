@@ -18,23 +18,25 @@ interface Project {
 const projects: Project[] = [
 	{
 		id: "1",
-		title: "NotesBuddy",
+		title: "FreeTune",
 		description:
-			"A highly extensible study platform. Features markdown notes, AI flashcards, timed quizzes, and a comprehensive real-time chat interface. Built for high performance.",
+			"A lightweight, cross-platform desktop music player built with Tauri, React, and Rust that aggregates royalty-free music from various free sources.",
 		image: "linear-gradient(135deg, #4c1d95 0%, #1e3a8a 100%)",
 		logo: "https://api.dicebear.com/7.x/pixel-art/svg?seed=notes",
 		links: [
-			{ type: "globe", url: "#" },
-			{ type: "github", url: "#" },
+			{ type: "github", url: "https://github.com/arindam923/freetune" },
 		],
 		technologies: [
-			{ name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/FFFFFF" },
+			{ name: "Tauri", icon: "https://cdn.simpleicons.org/tauri/FFFFFF" },
+			{
+				name:"Rust",
+				icon:"https://cdn.simpleicons.org/rust/DEA584"
+			},
 			{
 				name: "TypeScript",
 				icon: "https://cdn.simpleicons.org/typescript/3178C6",
 			},
 			{ name: "React", icon: "https://cdn.simpleicons.org/react/61DAFB" },
-			{ name: "MongoDB", icon: "https://cdn.simpleicons.org/mongodb/47A248" },
 			{
 				name: "Tailwind",
 				icon: "https://cdn.simpleicons.org/tailwindcss/06B6D4",
@@ -109,46 +111,24 @@ const projects: Project[] = [
 const ProjectCard = ({ project }: { project: Project }) => {
 	return (
 		<div className="group relative flex flex-col rounded-3xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700/80 transition-all duration-500 overflow-hidden hover:shadow-[0_0_40px_-15px_rgba(255,255,255,0.05)] cursor-pointer h-full">
-			{/* Visual Header / Image Area */}
 			<div
 				className="h-48 w-full relative overflow-hidden flex-shrink-0"
 				style={{ background: project.image }}
 			>
-				{/* Dark overlay for contrast */}
 				<div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
-
-				{/* Mockup Window Effect */}
-				<div className="absolute inset-x-8 bottom-0 top-12 bg-zinc-950/80 rounded-t-xl border-x border-t border-white/10 shadow-2xl backdrop-blur-sm transform translate-y-4 group-hover:translate-y-2 transition-transform duration-500 flex flex-col overflow-hidden">
-					{/* Browser/App Header */}
-					<div className="h-6 bg-white/5 border-b border-white/10 flex items-center px-3 gap-1.5 shrink-0">
-						<div className="w-2 h-2 rounded-full bg-rose-500/80" />
-						<div className="w-2 h-2 rounded-full bg-amber-500/80" />
-						<div className="w-2 h-2 rounded-full bg-emerald-500/80" />
-					</div>
-					{/* Inner Content Placeholder */}
-					<div className="flex-1 p-4 flex flex-col gap-3 opacity-50">
-						<div className="h-3 w-1/3 bg-white/20 rounded-md animate-pulse" />
-						<div className="h-2 w-3/4 bg-white/10 rounded-md" />
-						<div className="h-2 w-1/2 bg-white/10 rounded-md" />
-					</div>
-				</div>
-			</div>
-
-			{/* Content Area */}
-			<div className="p-6 md:p-8 flex flex-col h-full z-10 bg-zinc-950 relative">
-				{/* Floating Logo */}
-				<div className="absolute -top-10 left-6 md:left-8 w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-700 flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-500 z-20 overflow-hidden">
+				<div className="absolute inset-x-0 bottom-0 top-4 overflow-hidden transform translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
 					<Image
-						src={project.logo}
-						alt={`${project.title} logo`}
-						width={36}
-						height={36}
-						className="object-contain"
+						src="https://github.com/arindam923/freetune/raw/main/player.png"
+						alt="Project preview"
+						fill
+						className="object-cover rounded-t-lg"
 						unoptimized
 					/>
 				</div>
+			</div>
 
-				{/* Top Actions Spacer & Links */}
+			<div className="p-6 md:p-8 flex flex-col h-full z-10 bg-zinc-950 relative">
+				
 				<div className="flex justify-end items-start h-8 mb-4">
 					<div className="flex gap-2">
 						{project.links.map((link, i) => (
@@ -249,7 +229,7 @@ const ProjectsSection = () => {
 					</p>
 				</div>
 				<a
-					href="https://github.com/ramxcodes"
+					href="https://github.com/arindam923"
 					target="_blank"
 					rel="noopener noreferrer"
 					className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors group"

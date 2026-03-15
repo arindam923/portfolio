@@ -14,6 +14,7 @@ import {
 	Github,
 	ArrowRight,
 	Command as CommandIcon,
+	Twitter,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -144,7 +145,18 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 								label="GitHub Profile"
 								shortcut="↗"
 							/>
+							<CommandItem
+								onSelect={() =>
+									runCommand(() =>
+										window.open("https://x.com/mars87153", "_blank"),
+									)
+								}
+								icon={<Twitter className="w-4 h-4" />}
+								label="Twitter Profile"
+								shortcut="↗"
+							/>
 						</CommandGroup>
+						
 					</Command.List>
 
 					{/* Footer */}

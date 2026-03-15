@@ -1,4 +1,4 @@
-import React, { Fragment, Children } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Check } from "lucide-react";
@@ -91,48 +91,17 @@ export const MDXComponents = {
 		/>
 	),
 
-	p: ({ className, children, ...props }: any) => {
-		const childrenArray = Children.toArray(children);
-		const hasBlockElement = childrenArray.some((child) => {
-			if (!React.isValidElement(child)) return false;
-			const childType = child.type as { displayName?: string; name?: string };
-			const displayName = childType.displayName || childType.name;
-			return (
-				displayName &&
-				[
-					"h1",
-					"h2",
-					"h3",
-					"h4",
-					"h5",
-					"h6",
-					"ul",
-					"ol",
-					"li",
-					"blockquote",
-					"pre",
-					"code",
-					"div",
-					"figure",
-					"StepHeader",
-				].includes(displayName)
-			);
-		});
-
-		if (hasBlockElement) {
-			return <Fragment {...props}>{children}</Fragment>;
-		}
-
-		return (
-			<p
-				className={cn(
-					"leading-7 text-muted-foreground [&:not(:first-child)]:mt-6",
-					className,
-				)}
-				{...props}
-			/>
-		);
-	},
+	p: ({ className, children, ...props }: any) => (
+		<p
+			className={cn(
+				"leading-7 text-muted-foreground [&:not(:first-child)]:mt-6",
+				className,
+			)}
+			{...props}
+		>
+			{children}
+		</p>
+	),
 
 	strong: ({ className, ...props }: any) => (
 		<strong
