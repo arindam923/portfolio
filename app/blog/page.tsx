@@ -1,6 +1,13 @@
 import { getBlogPosts } from "@/lib/blogs";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Blog | Arindam Roy",
+	description:
+		"Thoughts, tutorials, and insights on engineering and product development.",
+};
 
 export default function BlogPage() {
 	const blogs = getBlogPosts();
