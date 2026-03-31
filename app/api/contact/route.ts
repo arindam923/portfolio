@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { messages } from "@/db/schema";
+import { messages, requestRateLimits } from "@/db/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
@@ -7,98 +7,202 @@ import { and, eq, gt, count } from "drizzle-orm";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Pre-configured model instance for better performance
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash", // Using faster flash model
-    generationConfig: {
-        maxOutputTokens: 150, // Limit output for faster response
-        temperature: 0.7,
-    },
+	model: "gemini-2.5-flash",
+	generationConfig: {
+		maxOutputTokens: 16,
+		temperature: 0,
+	},
 });
 
-const AI_PERSONA_PROMPT = `You are Arindam Roy's AI assistant. Arindam is a Full Stack Developer and Open Source Contributor. Respond professionally and friendly to people reaching out through his portfolio. Acknowledge their message briefly and thank them for the shoutout. Since we don't collect contact info here, suggest they reach out on Twitter or LinkedIn if they need a direct response. Keep it to 2-3 sentences. Be humble and tech-focused.
+const CLASSIFIER_PROMPT = `You classify incoming portfolio contact requests.
+Return exactly one token: GENUINE or SPAM.
 
-Subject: {{subject}}
-Message: {{message}}`;
+GENUINE means a real project inquiry, collaboration request, hiring/recruiting message, or thoughtful technical/professional outreach.
+SPAM means ads, scams, phishing, irrelevant promotion, gibberish, or low-effort bulk solicitation.
+
+Subject: "{{subject}}"
+Contact: "{{contact}}"
+Message: "{{message}}"`;
 
 // Constants
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_MESSAGES_PER_WINDOW = 3;
+const MAX_CONTACT_LENGTH = 320;
 const MAX_SUBJECT_LENGTH = 200;
 const MAX_MESSAGE_LENGTH = 2000;
+const SPAM_BLOCK_THRESHOLD = 2;
+const SPAM_BLOCK_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+type ModerationVerdict = "GENUINE" | "SPAM";
+
+async function classifyRequest(contact: string, subject: string, message: string): Promise<ModerationVerdict> {
+	if (!process.env.GEMINI_API_KEY) {
+		// Fall back to accepting when classifier is unavailable to avoid dropping valid leads.
+		return "GENUINE";
+	}
+
+	const result = await model.generateContent(
+		CLASSIFIER_PROMPT
+			.replace("{{contact}}", contact)
+			.replace("{{subject}}", subject)
+			.replace("{{message}}", message)
+	);
+	const verdict = result.response.text().trim().toUpperCase();
+	return verdict === "GENUINE" ? "GENUINE" : "SPAM";
+}
+
+async function handleQueuedMessage(messageId: number, ip: string, contact: string, subject: string, message: string) {
+	try {
+		const [existingLimit] = await db
+			.select()
+			.from(requestRateLimits)
+			.where(eq(requestRateLimits.ip, ip))
+			.limit(1);
+
+		if (existingLimit?.blockedUntil && existingLimit.blockedUntil > new Date()) {
+			await db.delete(messages).where(eq(messages.id, messageId));
+			return;
+		}
+
+		const verdict = await classifyRequest(contact, subject, message);
+
+		if (verdict === "SPAM") {
+			const nextSpamCount = (existingLimit?.spamCount ?? 0) + 1;
+			const shouldBlock = nextSpamCount >= SPAM_BLOCK_THRESHOLD;
+			const blockedUntil = shouldBlock ? new Date(Date.now() + SPAM_BLOCK_WINDOW_MS) : null;
+
+			await db
+				.insert(requestRateLimits)
+				.values({
+					ip,
+					spamCount: nextSpamCount,
+					blockedUntil: blockedUntil ?? undefined,
+					updatedAt: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: requestRateLimits.ip,
+					set: {
+						spamCount: nextSpamCount,
+						blockedUntil: blockedUntil ?? undefined,
+						updatedAt: new Date(),
+					},
+				});
+
+			await db.delete(messages).where(eq(messages.id, messageId));
+			return;
+		}
+
+		// Count only already-approved genuine requests in the rolling window.
+		const twentyFourHoursAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
+		const [{ messageCount }] = await db
+			.select({ messageCount: count() })
+			.from(messages)
+			.where(
+				and(
+					eq(messages.ip, ip),
+					eq(messages.moderationStatus, "genuine"),
+					gt(messages.createdAt, twentyFourHoursAgo)
+				)
+			);
+
+		if (messageCount >= MAX_MESSAGES_PER_WINDOW) {
+			// Valid but over quota: remove from inbox so only actionable messages remain.
+			await db.delete(messages).where(eq(messages.id, messageId));
+			return;
+		}
+
+		await db
+			.update(messages)
+			.set({ moderationStatus: "genuine" })
+			.where(eq(messages.id, messageId));
+
+		if (existingLimit) {
+			await db
+				.insert(requestRateLimits)
+				.values({
+					ip,
+					spamCount: 0,
+					blockedUntil: null,
+					updatedAt: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: requestRateLimits.ip,
+					set: {
+						spamCount: 0,
+						blockedUntil: null,
+						updatedAt: new Date(),
+					},
+				});
+		}
+	} catch (error) {
+		console.error("Queued moderation failed:", error);
+		// Leave as pending so it can be retried manually if needed.
+	}
+}
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const subject = body.subject?.trim();
-        const message = body.message?.trim();
+	try {
+		const body = await req.json();
+		const contact = body.contact?.trim();
+		const subject = body.subject?.trim();
+		const message = body.message?.trim();
 
-        // 1. Input Validation (fast, before any DB/API calls)
-        if (!subject || !message) {
-            return NextResponse.json(
-                { error: "Subject and message are required" },
-                { status: 400 }
-            );
-        }
+		if (!contact || !subject || !message) {
+			return NextResponse.json(
+				{ error: "Contact, subject and message are required" },
+				{ status: 400 }
+			);
+		}
 
-        if (subject.length > MAX_SUBJECT_LENGTH || message.length > MAX_MESSAGE_LENGTH) {
-            return NextResponse.json(
-                { error: "Subject or message exceeds maximum length" },
-                { status: 400 }
-            );
-        }
+		if (
+			contact.length > MAX_CONTACT_LENGTH ||
+			subject.length > MAX_SUBJECT_LENGTH ||
+			message.length > MAX_MESSAGE_LENGTH
+		) {
+			return NextResponse.json(
+				{ error: "Contact, subject or message exceeds maximum length" },
+				{ status: 400 }
+			);
+		}
 
-        // 2. Get IP for rate limiting
-        const headersList = await headers();
-        const forwardedFor = headersList.get("x-forwarded-for");
-        const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
+		const headersList = await headers();
+		const forwardedFor = headersList.get("x-forwarded-for");
+		const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
 
-        const twentyFourHoursAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
+		// Fast hard block check so abusive users are rejected immediately.
+		const [existingLimit] = await db
+			.select()
+			.from(requestRateLimits)
+			.where(eq(requestRateLimits.ip, ip))
+			.limit(1);
 
-        // 3. Rate Limiting - Use COUNT for better performance (uses index)
-        const [{ messageCount }] = await db
-            .select({ messageCount: count() })
-            .from(messages)
-            .where(
-                and(
-                    eq(messages.ip, ip),
-                    gt(messages.createdAt, twentyFourHoursAgo)
-                )
-            );
+		if (existingLimit?.blockedUntil && existingLimit.blockedUntil > new Date()) {
+			return NextResponse.json(
+				{ error: "Rate limit exceeded. Please try again later." },
+				{ status: 429 }
+			);
+		}
 
-        if (messageCount >= MAX_MESSAGES_PER_WINDOW) {
-            return NextResponse.json(
-                { error: "Rate limit exceeded. Please try again after 24 hours." },
-                { status: 429 }
-            );
-        }
+		const [queued] = await db.insert(messages).values({
+			ip,
+			contact,
+			subject,
+			message,
+			moderationStatus: "pending",
+		}).returning({ id: messages.id });
 
-        // 4. Generate AI response
-        const prompt = AI_PERSONA_PROMPT
-            .replace("{{subject}}", subject)
-            .replace("{{message}}", message);
+		// Schedule moderation after response path for snappier user-perceived latency.
+		setTimeout(() => {
+			void handleQueuedMessage(queued.id, ip, contact, subject, message);
+		}, 0);
 
-        const result = await model.generateContent(prompt);
-        const aiReply = result.response.text();
-
-        // 5. Save to DB (non-blocking for faster response)
-        db.insert(messages).values({
-            ip,
-            subject,
-            message,
-            aiReply,
-        }).then(() => {
-            // Silent success
-        }).catch((err) => {
-            console.error("Failed to save message to DB:", err);
-        });
-
-        return NextResponse.json({ success: true, aiReply });
-    } catch (error) {
-        console.error("Contact API Error:", error);
-        return NextResponse.json(
-            { error: "Failed to process message" },
-            { status: 500 }
-        );
-    }
+		return NextResponse.json({ success: true, queued: true });
+	} catch (error) {
+		console.error("Contact API Error:", error);
+		return NextResponse.json(
+			{ error: "Failed to process message" },
+			{ status: 500 }
+		);
+	}
 }

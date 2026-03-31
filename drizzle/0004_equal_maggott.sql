@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `contact` text DEFAULT '' NOT NULL;

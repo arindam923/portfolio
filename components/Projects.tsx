@@ -9,6 +9,7 @@ interface Project {
 	description: string;
 	image: string;
 	logo: string;
+	projectImage: string;
 	links: { type: "globe" | "github"; url: string }[];
 	technologies: { name: string; icon: string }[];
 	status: "live" | "wip" | "soon";
@@ -22,6 +23,7 @@ const projects: Project[] = [
 		description:
 			"A lightweight, cross-platform desktop music player built with Tauri, React, and Rust that aggregates royalty-free music from various free sources.",
 		image: "linear-gradient(135deg, #4c1d95 0%, #1e3a8a 100%)",
+		projectImage: "https://github.com/arindam923/freetune/raw/main/player.png",
 		logo: "https://api.dicebear.com/7.x/pixel-art/svg?seed=notes",
 		links: [
 			{ type: "github", url: "https://github.com/arindam923/freetune" },
@@ -29,8 +31,8 @@ const projects: Project[] = [
 		technologies: [
 			{ name: "Tauri", icon: "https://cdn.simpleicons.org/tauri/FFFFFF" },
 			{
-				name:"Rust",
-				icon:"https://cdn.simpleicons.org/rust/DEA584"
+				name: "Rust",
+				icon: "https://cdn.simpleicons.org/rust/DEA584"
 			},
 			{
 				name: "TypeScript",
@@ -43,17 +45,18 @@ const projects: Project[] = [
 			},
 		],
 		status: "live",
-		year: "2024",
+		year: "2026",
 	},
 	{
 		id: "2",
-		title: "Appwrite MCP Server",
+		title: "Airpay",
+		projectImage: "/airpay.png",
 		description:
 			"An optimized Model Context Protocol server wrapped around Appwrite database primitives. Provides zero-latency tooling with a 99.9% measured success rate in edge environments.",
-		image: "linear-gradient(135deg, #0284c7 0%, #1e3a8a 100%)",
+		image: "linear-gradient(135deg,rgb(2, 3, 4) 0%,rgb(245, 68, 33) 100%)",
 		logo: "https://api.dicebear.com/7.x/pixel-art/svg?seed=server",
 		links: [
-			{ type: "globe", url: "#" },
+			{ type: "globe", url: "https://airpay-green.vercel.app/" },
 			{ type: "github", url: "#" },
 		],
 		technologies: [
@@ -71,11 +74,12 @@ const projects: Project[] = [
 	{
 		id: "3",
 		title: "Syncify",
+		projectImage: "/flashdb-landing.png",
 		description:
 			"Music streaming architecture reimagined. A bespoke interface connecting directly to Spotify's APIs for real-time social listening, advanced analytics, and queued sessions.",
 		image: "linear-gradient(135deg, #db2777 0%, #4c1d95 100%)",
 		logo: "https://api.dicebear.com/7.x/pixel-art/svg?seed=music",
-		links: [{ type: "globe", url: "#" }],
+		links: [{ type: "globe", url: "https://flashdb-landing-page.vercel.app/" }],
 		technologies: [
 			{ name: "React", icon: "https://cdn.simpleicons.org/react/61DAFB" },
 			{
@@ -89,12 +93,13 @@ const projects: Project[] = [
 	},
 	{
 		id: "4",
-		title: "Passandit Murat",
+		title: "Toolkit",
+		projectImage: "/toolkit.png",
 		description:
 			"An upcoming e-commerce engine focusing on curated, high-end lifestyle products. Engineered for headless performance and seamless cross-border stripe integration.",
 		image: "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
 		logo: "https://api.dicebear.com/7.x/heart/svg?seed=love",
-		links: [{ type: "globe", url: "#" }],
+		links: [{ type: "globe", url: "https://toolkit-wine.vercel.app/" }],
 		technologies: [
 			{ name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/FFFFFF" },
 			{ name: "Stripe", icon: "https://cdn.simpleicons.org/stripe/008CDD" },
@@ -118,17 +123,16 @@ const ProjectCard = ({ project }: { project: Project }) => {
 				<div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
 				<div className="absolute inset-x-0 bottom-0 top-4 overflow-hidden transform translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
 					<Image
-						src="https://github.com/arindam923/freetune/raw/main/player.png"
+						src={project.projectImage}
 						alt="Project preview"
 						fill
-						className="object-cover rounded-t-lg"
+						className="object-cover object-top rounded-t-lg"
 						unoptimized
 					/>
 				</div>
 			</div>
 
 			<div className="p-6 md:p-8 flex flex-col h-full z-10 bg-zinc-950 relative">
-				
 				<div className="flex justify-end items-start h-8 mb-4">
 					<div className="flex gap-2">
 						{project.links.map((link, i) => (
@@ -205,9 +209,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
 							))}
 						</div>
 
-						<button className="flex items-center justify-center w-8 h-8 rounded-full bg-white text-black shrink-0 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform duration-300 ml-2">
+						{/* <button className="flex items-center justify-center w-8 h-8 rounded-full bg-white text-black shrink-0 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform duration-300 ml-2">
 							<ArrowUpRight className="w-4 h-4" />
-						</button>
+						</button> */}
 					</div>
 				</div>
 			</div>

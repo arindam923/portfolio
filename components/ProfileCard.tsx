@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowUpRight, Github, Twitter, Mail } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, Download, FileText, Github, Twitter, Mail } from "lucide-react";
 import { useState } from "react";
 import { ContactModal } from "./ContactModal";
 
@@ -120,7 +121,7 @@ const ProfileCard = () => {
 				</div>
 
 				{/* Primary CTA */}
-				<div className="mt-4">
+				<div className="mt-4 flex flex-wrap items-center gap-3">
 					<button
 						type="button"
 						onClick={() => setIsModalOpen(true)}
@@ -130,6 +131,23 @@ const ProfileCard = () => {
 						Let&apos;s talk
 						<ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
 					</button>
+					<Link
+						href="/ArindamRoyResume.pdf"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+					>
+						<FileText className="w-4 h-4" />
+						View Resume
+					</Link>
+					{/* <Link
+						href="/ArindamRoyResume.pdf"
+						download
+						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+					>
+						<Download className="w-4 h-4" />
+						Download Resume
+					</Link> */}
 				</div>
 			</div>
 

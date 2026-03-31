@@ -1,0 +1,2 @@
+ALTER TABLE `messages` ADD `moderation_status` text DEFAULT 'pending' NOT NULL;--> statement-breakpoint
+CREATE INDEX `messages_ip_status_created_at_idx` ON `messages` (`ip`,`moderation_status`,`created_at`);

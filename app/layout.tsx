@@ -74,6 +74,7 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,
@@ -115,6 +116,19 @@ export default function RootLayout({
         >
           <Header />
           <main>{children}</main>
+          <Toaster
+            position="bottom-right"
+            richColors
+            toastOptions={{
+              classNames: {
+                toast:
+                  "border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-2xl",
+                description: "text-zinc-400",
+                actionButton: "bg-zinc-100 text-zinc-900",
+                cancelButton: "bg-zinc-800 text-zinc-100",
+              },
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>
