@@ -1,30 +1,9 @@
 import { db } from "@/db";
 import { messages, requestRateLimits } from "@/db/schema";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { and, eq, gt, count } from "drizzle-orm";
 import { Resend } from "resend";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-const model = genAI.getGenerativeModel({
-	model: "gemini-2.5-flash",
-	generationConfig: {
-		maxOutputTokens: 16,
-		temperature: 0,
-	},
-});
-
-const CLASSIFIER_PROMPT = `You classify incoming portfolio contact requests.
-Return exactly one token: GENUINE or SPAM.
-
-GENUINE means a real project inquiry, collaboration request, hiring/recruiting message, or thoughtful technical/professional outreach.
-SPAM means ads, scams, phishing, irrelevant promotion, gibberish, or low-effort bulk solicitation.
-
-Subject: "{{subject}}"
-Contact: "{{contact}}"
-Message: "{{message}}"`;
 
 // Constants
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -33,12 +12,8 @@ const MAX_NAME_LENGTH = 100;
 const MAX_CONTACT_LENGTH = 320;
 const MAX_SUBJECT_LENGTH = 200;
 const MAX_MESSAGE_LENGTH = 2000;
-const SPAM_BLOCK_THRESHOLD = 2;
-const SPAM_BLOCK_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type ModerationVerdict = "GENUINE" | "SPAM";
 
 // Lazy-init Resend so missing key just skips email without crashing
 function getResend(): Resend | null {
@@ -99,7 +74,7 @@ async function sendNotificationEmail(name: string, contact: string, subject: str
 
 					<a href="mailto:${contact}?subject=Re: ${encodeURIComponent(subject)}" style="display: inline-block; background: #fafafa; color: #09090b; font-weight: 600; font-size: 14px; padding: 12px 24px; border-radius: 9999px; text-decoration: none; letter-spacing: 0.02em;">Reply to ${name} →</a>
 
-					<p style="margin-top: 32px; font-size: 11px; color: #3f3f46;">This message was auto-classified as genuine and passed rate limiting checks.</p>
+					<p style="margin-top: 32px; font-size: 11px; color: #3f3f46;">New contact form submission.</p>
 				</div>
 			</body>
 			</html>
@@ -156,64 +131,9 @@ async function sendThankYouEmail(name: string, contact: string, subject: string)
 	});
 }
 
-async function classifyRequest(contact: string, subject: string, message: string): Promise<ModerationVerdict> {
-	if (!process.env.GEMINI_API_KEY) {
-		// Fall back to accepting when classifier is unavailable to avoid dropping valid leads.
-		return "GENUINE";
-	}
-
-	const result = await model.generateContent(
-		CLASSIFIER_PROMPT
-			.replace("{{contact}}", contact)
-			.replace("{{subject}}", subject)
-			.replace("{{message}}", message)
-	);
-	const verdict = result.response.text().trim().toUpperCase();
-	return verdict === "GENUINE" ? "GENUINE" : "SPAM";
-}
-
-async function handleQueuedMessage(messageId: number, ip: string, name: string, contact: string, subject: string, message: string) {
+async function processMessage(messageId: number, ip: string, name: string, contact: string, subject: string, message: string) {
 	try {
-		const [existingLimit] = await db
-			.select()
-			.from(requestRateLimits)
-			.where(eq(requestRateLimits.ip, ip))
-			.limit(1);
-
-		if (existingLimit?.blockedUntil && existingLimit.blockedUntil > new Date()) {
-			await db.delete(messages).where(eq(messages.id, messageId));
-			return;
-		}
-
-		const verdict = await classifyRequest(contact, subject, message);
-
-		if (verdict === "SPAM") {
-			const nextSpamCount = (existingLimit?.spamCount ?? 0) + 1;
-			const shouldBlock = nextSpamCount >= SPAM_BLOCK_THRESHOLD;
-			const blockedUntil = shouldBlock ? new Date(Date.now() + SPAM_BLOCK_WINDOW_MS) : null;
-
-			await db
-				.insert(requestRateLimits)
-				.values({
-					ip,
-					spamCount: nextSpamCount,
-					blockedUntil: blockedUntil ?? undefined,
-					updatedAt: new Date(),
-				})
-				.onConflictDoUpdate({
-					target: requestRateLimits.ip,
-					set: {
-						spamCount: nextSpamCount,
-						blockedUntil: blockedUntil ?? undefined,
-						updatedAt: new Date(),
-					},
-				});
-
-			await db.delete(messages).where(eq(messages.id, messageId));
-			return;
-		}
-
-		// Count only already-approved genuine requests in the rolling window.
+		// Count already-approved messages in the rolling window
 		const twentyFourHoursAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
 		const [{ messageCount }] = await db
 			.select({ messageCount: count() })
@@ -227,7 +147,6 @@ async function handleQueuedMessage(messageId: number, ip: string, name: string, 
 			);
 
 		if (messageCount >= MAX_MESSAGES_PER_WINDOW) {
-			// Valid but over quota: remove from inbox so only actionable messages remain.
 			await db.delete(messages).where(eq(messages.id, messageId));
 			return;
 		}
@@ -237,33 +156,13 @@ async function handleQueuedMessage(messageId: number, ip: string, name: string, 
 			.set({ moderationStatus: "genuine" })
 			.where(eq(messages.id, messageId));
 
-		if (existingLimit) {
-			await db
-				.insert(requestRateLimits)
-				.values({
-					ip,
-					spamCount: 0,
-					blockedUntil: null,
-					updatedAt: new Date(),
-				})
-				.onConflictDoUpdate({
-					target: requestRateLimits.ip,
-					set: {
-						spamCount: 0,
-						blockedUntil: null,
-						updatedAt: new Date(),
-					},
-				});
-		}
-
-		// Fire both emails concurrently — don't block on them
+		// Fire both emails concurrently
 		await Promise.allSettled([
 			sendNotificationEmail(name, contact, subject, message),
 			sendThankYouEmail(name, contact, subject),
 		]);
 	} catch (error) {
-		console.error("Queued moderation failed:", error);
-		// Leave as pending so it can be retried manually if needed.
+		console.error("Message processing failed:", error);
 	}
 }
 
@@ -308,20 +207,6 @@ export async function POST(req: Request) {
 		const forwardedFor = headersList.get("x-forwarded-for");
 		const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
 
-		// Fast hard block check so abusive users are rejected immediately.
-		const [existingLimit] = await db
-			.select()
-			.from(requestRateLimits)
-			.where(eq(requestRateLimits.ip, ip))
-			.limit(1);
-
-		if (existingLimit?.blockedUntil && existingLimit.blockedUntil > new Date()) {
-			return NextResponse.json(
-				{ error: "Too many requests. Please try again later." },
-				{ status: 429 }
-			);
-		}
-
 		const [queued] = await db.insert(messages).values({
 			ip,
 			name,
@@ -331,9 +216,9 @@ export async function POST(req: Request) {
 			moderationStatus: "pending",
 		}).returning({ id: messages.id });
 
-		// Schedule moderation after response path for snappier user-perceived latency.
+		// Process message after response
 		setTimeout(() => {
-			void handleQueuedMessage(queued.id, ip, name, contact, subject, message);
+			void processMessage(queued.id, ip, name, contact, subject, message);
 		}, 0);
 
 		return NextResponse.json({ success: true, queued: true });
