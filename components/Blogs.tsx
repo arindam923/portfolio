@@ -14,74 +14,70 @@ const Blogs = ({ posts }: BlogsProps) => {
 	return (
 		<section
 			id="blogs"
-			className="mt-28 md:mt-36 w-full scroll-mt-24 max-w-3xl mx-auto md:mx-0"
+			className="mt-20 md:mt-28 w-full scroll-mt-28"
 		>
-			<div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-				<div className="max-w-2xl">
-					<h2 className="text-3xl font-semibold tracking-tight text-white mb-2">
-						Writing
-					</h2>
-					<p className="text-zinc-500 text-sm">
-						Thoughts on software engineering, product development, and design.
-					</p>
+			<div className="mb-10 max-w-xl">
+				<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.02] border border-white/5 mb-4">
+					<span className="text-[10px] font-mono tracking-wider text-zinc-400 uppercase">
+						{"// thoughts"}
+					</span>
 				</div>
+				<h2 className="text-3xl font-display font-bold tracking-tight text-white mb-2">
+					Writing
+				</h2>
+				<p className="text-zinc-500 text-sm">
+					Insights and deep dives on full stack architectures, smart escrow design, and frontend aesthetics.
+				</p>
 			</div>
 
-			<div className="flex flex-col gap-8">
+			<div className="flex flex-col border-t border-white/5">
 				{posts.map((post) => (
 					<article
 						key={post.title}
 						onClick={() => router.push(`/blog/${post.slug}`)}
-						className="group flex flex-col md:flex-row gap-6 items-start cursor-pointer"
+						className="group flex flex-col md:flex-row gap-4 md:gap-8 py-7 border-b border-white/5 cursor-pointer items-start justify-between transition-colors duration-300 hover:bg-white/[0.005]"
 					>
-						{/* Date (Left side on desktop) */}
-						<div className="hidden md:block w-32 shrink-0 pt-1">
-							<span className="text-sm font-medium text-zinc-500 font-mono">
+						{/* Date */}
+						<div className="w-32 shrink-0 pt-0.5">
+							<span className="text-xs font-mono tracking-wider text-zinc-500">
 								{post.date}
 							</span>
 						</div>
 
-						{/* Line separator for mobile */}
-						<div className="md:hidden flex items-center gap-4 w-full">
-							<span className="text-xs font-medium text-zinc-500 font-mono">
-								{post.date}
-							</span>
-							<div className="h-px bg-zinc-800 flex-grow" />
-						</div>
-
-						{/* Content */}
-						<div className="flex flex-col flex-grow">
-							<h3 className="text-xl font-semibold text-zinc-100 mb-2 group-hover:text-white transition-colors">
+						{/* Content and Title */}
+						<div className="flex flex-col flex-grow gap-2 max-w-xl">
+							<h3 className="text-base md:text-lg font-display font-bold text-zinc-200 group-hover:text-white transition-colors leading-snug">
 								{post.title}
 							</h3>
-							<p className="text-[15px] leading-relaxed text-zinc-400 mb-4 max-w-xl">
+							<p className="text-xs md:text-sm leading-relaxed text-zinc-500 max-w-lg">
 								{post.description}
 							</p>
 
-							<div className="flex flex-wrap gap-2 items-center justify-between mt-auto">
-								<div className="flex gap-2">
-									{post.tag.map((tag: string) => (
-										<span
-											key={tag}
-											className="px-2.5 py-1 text-xs font-medium text-zinc-500 rounded border border-zinc-800/80 bg-zinc-900/50"
-										>
-											{tag}
-										</span>
-									))}
-								</div>
-								<div className="w-8 h-8 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-500 group-hover:bg-white group-hover:text-black group-hover:border-transparent transition-all duration-300">
-									<ArrowUpRight className="w-4 h-4" />
-								</div>
+							<div className="flex flex-wrap gap-1.5 mt-2 max-w-full">
+								{post.tag.map((tag: string) => (
+									<span
+										key={tag}
+										className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-mono font-medium text-zinc-400 bg-white/[0.02] border border-white/5 rounded uppercase tracking-wider whitespace-nowrap shrink-0 transition-all duration-200 hover:border-emerald-500/30 hover:text-emerald-400 hover:bg-emerald-950/10 select-none"
+									>
+										<span className="text-emerald-500/50 font-bold">#</span>
+										{tag}
+									</span>
+								))}
 							</div>
+						</div>
+
+						{/* Interactive Arrow Button */}
+						<div className="hidden md:flex w-8 h-8 rounded-full border border-white/5 group-hover:border-white/20 items-center justify-center text-zinc-500 group-hover:text-white transition-all shrink-0">
+							<ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
 						</div>
 					</article>
 				))}
 			</div>
 
-			<div className="mt-12">
+			<div className="mt-8">
 				<button
 					type="button"
-					className="text-sm font-medium text-zinc-400 hover:text-white flex items-center gap-2 group transition-colors"
+					className="text-xs font-mono uppercase tracking-widest text-zinc-400 hover:text-white flex items-center gap-2 group transition-colors"
 				>
 					View all posts
 					<ArrowUpRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -92,3 +88,4 @@ const Blogs = ({ posts }: BlogsProps) => {
 };
 
 export default Blogs;
+

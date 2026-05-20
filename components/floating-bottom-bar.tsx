@@ -26,7 +26,7 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 		});
 	}, [scrollYProgress]);
 
-	const radius = 12;
+	const radius = 11;
 	const circumference = 2 * Math.PI * radius;
 	const dashOffset = useTransform(smoothProgress, [0, 1], [circumference, 0]);
 
@@ -37,38 +37,40 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: 0.5, duration: 0.8, ease: [0.2, 0, 0, 1] }}
 		>
-			<div className="bg-white/90 dark:bg-black/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-full h-12 flex items-center px-4 justify-between shadow-lg dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-				<div className="flex items-center gap-3 overflow-hidden ml-1">
-					<div className="relative flex h-2 w-2 shrink-0">
-						<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-						<span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+			<div className="bg-zinc-950/85 backdrop-blur-xl border border-zinc-800 rounded-xl h-11 flex items-center px-3.5 justify-between shadow-2xl">
+				{/* File/Post title status */}
+				<div className="flex items-center gap-2 overflow-hidden ml-0.5">
+					<div className="relative flex h-1.5 w-1.5 shrink-0">
+						<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+						<span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
 					</div>
-					<span className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[180px]">
+					<span className="text-[11px] font-mono font-medium text-zinc-400 truncate max-w-[170px] uppercase tracking-wider">
 						{blog.title}
 					</span>
 				</div>
 
-				<div className="flex items-center gap-3 flex-shrink-0">
-					<span className="text-[11px] font-mono font-bold text-zinc-500 tracking-tighter">
-						{percent}%
+				{/* Telemetry percentage and ring */}
+				<div className="flex items-center gap-2.5 flex-shrink-0">
+					<span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-900/30 px-1.5 py-0.5 rounded">
+						SYS.READ: {percent}%
 					</span>
 
-					<div className="relative flex items-center justify-center w-8 h-8">
+					<div className="relative flex items-center justify-center w-7 h-7">
 						<svg className="w-full h-full -rotate-90">
 							<circle
-								cx="16"
-								cy="16"
+								cx="14"
+								cy="14"
 								r={radius}
-								className="stroke-zinc-300 dark:stroke-zinc-800"
-								strokeWidth="2.5"
+								className="stroke-zinc-900"
+								strokeWidth="2"
 								fill="transparent"
 							/>
 							<motion.circle
-								cx="16"
-								cy="16"
+								cx="14"
+								cy="14"
 								r={radius}
-								className="stroke-blue-500"
-								strokeWidth="2.5"
+								className="stroke-emerald-400"
+								strokeWidth="2"
 								strokeDasharray={circumference}
 								style={{ strokeDashoffset: dashOffset }}
 								strokeLinecap="round"
@@ -83,3 +85,4 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 };
 
 export default FloatingBar;
+

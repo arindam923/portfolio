@@ -1,0 +1,264 @@
+---
+title: "TypeScript patterns that mass-produce fewer bugs"
+subtitle: "The stuff that actually saves you at 2am when prod is on fire"
+date: "April 28, 2026"
+tags: ["typescript", "patterns", "frontend", "dx"]
+image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1600&q=80"
+---
+
+I've been writing TypeScript for years now, and most of the "advanced TypeScript" content out there is weirdly obsessed with type gymnastics nobody needs. Here's what actually matters: patterns that prevent bugs before they happen, make impossible states unrepresentable, and let the compiler do the thinking so you don't have to.
+
+These are patterns I reach for constantly in production code. Not because they're clever — because they work.
+
+## Discriminated unions for state machines
+
+Here's a pattern I see broken in almost every codebase. Someone models an API request like this:
+
+```typescript
+// ❌ The "everything is optional" disaster
+interface RequestState {
+  isLoading: boolean;
+  isError: boolean;
+  data?: User[];
+  error?: Error;
+}
+```
+
+You know what happens next. Someone checks `isLoading` but forgets `isError`. Someone accesses `data` when it's `undefined`. You end up with states that shouldn't exist — like `isLoading: true` AND `isError: true` at the same time.
+
+The fix is a discriminated union. Model each state as its own type, tied together by a literal `status` field:
+
+```typescript
+// ✅ Impossible states are now actually impossible
+type RequestState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: User[] }
+  | { status: "error"; error: Error };
+
+function renderUsers(state: RequestState) {
+  switch (state.status) {
+    case "idle":
+      return <Placeholder />;
+    case "loading":
+      return <Spinner />;
+    case "success":
+      // TypeScript KNOWS data exists here. No optional chaining needed.
+      return <UserList users={state.data} />;
+    case "error":
+      return <ErrorBanner message={state.error.message} />;
+  }
+}
+```
+
+`data` only exists when `status` is `"success"`. `error` only exists when `status` is `"error"`. You literally cannot access the wrong field in the wrong state — the compiler won't let you. Add a new status? TypeScript will scream at every `switch` statement that doesn't handle it.
+
+This is the single most impactful TypeScript pattern I know.
+
+## The `satisfies` keyword
+
+This one flew under the radar for a lot of people when it shipped in TypeScript 4.9, but it's become one of my most-used features.
+
+Here's the problem. Say you have a config object:
+
+```typescript
+// ❌ Type annotation widens everything
+type Theme = Record<string, [number, number, number]>;
+
+const palette: Theme = {
+  primary: [0, 122, 255],
+  danger: [255, 59, 48],
+  success: [52, 199, 89],
+};
+
+// palette.primary is [number, number, number] — fine
+// but palette.somethingThatDoesntExist is ALSO valid
+// because Record<string, ...> accepts any string key
+```
+
+You get type checking on the values, but you lose all knowledge of which keys actually exist. The type annotation replaces what TypeScript could infer.
+
+```typescript
+// ✅ satisfies: validates the shape WITHOUT widening the type
+const palette = {
+  primary: [0, 122, 255],
+  danger: [255, 59, 48],
+  success: [52, 199, 89],
+} satisfies Record<string, [number, number, number]>;
+
+// palette.primary → readonly [0, 122, 255] — TypeScript knows the EXACT keys
+// palette.somethingThatDoesntExist → ERROR ✅
+// Each value is still validated against [number, number, number] ✅
+```
+
+`satisfies` checks that your value conforms to a type without actually *annotating* it as that type. You get the best of both worlds — validation AND inference. I use this everywhere now: config objects, route maps, permission matrices, anything where I want to validate structure but keep the specific types.
+
+## Template literal types for type-safe strings
+
+Template literal types let you build string types out of other string types. Sounds academic until you see what it does:
+
+```typescript
+// ❌ Stringly-typed event system — typos are runtime errors
+function on(event: string, handler: () => void) { /* ... */ }
+on("usr:created", handler); // Typo. No error. Good luck debugging.
+```
+
+Now with template literals:
+
+```typescript
+// ✅ The compiler catches your typos
+type Entity = "user" | "order" | "product";
+type Action = "created" | "updated" | "deleted";
+type EventName = `${Entity}:${Action}`;
+
+// EventName = "user:created" | "user:updated" | "user:deleted"
+//           | "order:created" | "order:updated" | "order:deleted"
+//           | "product:created" | "product:updated" | "product:deleted"
+
+function on(event: EventName, handler: () => void) { /* ... */ }
+
+on("user:created", handler);  // ✅
+on("usr:created", handler);   // ❌ Compile error — caught instantly
+```
+
+TypeScript generates every valid combination automatically. 3 entities × 3 actions = 9 valid event names, all type-checked. I've used this exact pattern for event buses, API route builders, and CSS utility class generators. It turns a whole category of "oops, typo" bugs into compile errors.
+
+You can go further with type-safe route params too:
+
+```typescript
+type ExtractParams<T extends string> =
+  T extends `${string}:${infer Param}/${infer Rest}`
+    ? Param | ExtractParams<Rest>
+    : T extends `${string}:${infer Param}`
+      ? Param
+      : never;
+
+type Params = ExtractParams<"/users/:userId/posts/:postId">;
+// type Params = "userId" | "postId"
+```
+
+## `const` assertions — derive types from data
+
+Stop writing types by hand when the data already exists. Seriously.
+
+```typescript
+// ❌ Writing the same thing twice — they WILL drift apart
+type Role = "admin" | "editor" | "viewer";
+const ROLES = ["admin", "editor", "viewer"]; // string[] — no connection to the type
+
+// Someone adds "moderator" to the array but forgets the type.
+// Or updates the type but not the array. Classic.
+```
+
+`as const` makes the value the source of truth:
+
+```typescript
+// ✅ Single source of truth — the type IS the data
+const ROLES = ["admin", "editor", "viewer"] as const;
+type Role = (typeof ROLES)[number]; // "admin" | "editor" | "viewer"
+
+// Add "moderator" to the array → the type updates automatically
+// There's literally nothing to forget.
+```
+
+This works beautifully with objects too:
+
+```typescript
+const HTTP_CODES = {
+  OK: 200,
+  NOT_FOUND: 404,
+  INTERNAL_ERROR: 500,
+} as const;
+
+type HttpCode = (typeof HTTP_CODES)[keyof typeof HTTP_CODES]; // 200 | 404 | 500
+```
+
+I use this pattern constantly for enums-without-enums. You get the runtime values AND the types from one declaration. No drift. No sync issues. Just data.
+
+## Branded types for ID safety
+
+This is the one that prevents the most embarrassing bugs. In most codebases, every ID is just a `string`:
+
+```typescript
+// ❌ All IDs are strings — nothing stops you from mixing them up
+function getOrder(orderId: string) { /* ... */ }
+
+const userId = "usr_abc123";
+getOrder(userId); // Wrong ID type. No error. Enjoy your 500.
+```
+
+Branded types fix this by creating string types that are structurally incompatible:
+
+```typescript
+// ✅ IDs that can't be mixed up
+type Brand<T, B extends string> = T & { readonly __brand: B };
+
+type UserId = Brand<string, "UserId">;
+type OrderId = Brand<string, "OrderId">;
+
+function getOrder(orderId: OrderId) { /* ... */ }
+function getUser(userId: UserId) { /* ... */ }
+
+// You create branded values through constructor functions
+function toUserId(id: string): UserId { return id as UserId; }
+function toOrderId(id: string): OrderId { return id as OrderId; }
+
+const userId = toUserId("usr_abc123");
+const orderId = toOrderId("ord_xyz789");
+
+getOrder(userId);  // ❌ Compile error! Type 'UserId' is not assignable to 'OrderId'
+getOrder(orderId); // ✅ Correct type
+```
+
+The `__brand` property never actually exists at runtime — it's purely a compile-time tag. Zero runtime cost, but it catches a category of bugs that unit tests rarely cover because nobody thinks to test "what if I accidentally pass a user ID where an order ID goes?"
+
+Honestly, once you start using branded types for IDs, you'll wonder how you ever lived without them.
+
+## `NoInfer` — the utility type you didn't know you needed
+
+This one's newer (TypeScript 5.4+) and more niche, but when you need it, you *really* need it.
+
+Here's the problem. When TypeScript infers a generic type parameter, it looks at all the places that parameter is used and tries to find a type that satisfies all of them. Sometimes that inference pulls from a place you don't want:
+
+```typescript
+// ❌ TypeScript infers T from BOTH arguments — not what we want
+function createFSM<T extends string>(
+  initialState: T,
+  states: T[]
+) { /* ... */ }
+
+// We want T to be inferred from `states` only
+createFSM("loading", ["idle", "loading", "success", "error"]);
+// T is inferred as "idle" | "loading" | "success" | "error" — fine here
+
+createFSM("loadng", ["idle", "loading", "success", "error"]);
+// T widens to include "loadng" — NO ERROR. The typo gets absorbed.
+```
+
+TypeScript happily infers `T` as `"idle" | "loading" | "success" | "error" | "loadng"` because `"loadng"` satisfies `string`. The typo disappears into the union.
+
+`NoInfer` tells TypeScript: "don't use this position for inference."
+
+```typescript
+// ✅ NoInfer blocks inference from initialState
+function createFSM<T extends string>(
+  initialState: NoInfer<T>,
+  states: T[]
+) { /* ... */ }
+
+createFSM("loading", ["idle", "loading", "success", "error"]); // ✅
+createFSM("loadng", ["idle", "loading", "success", "error"]);
+// ❌ Error: "loadng" is not assignable to "idle" | "loading" | "success" | "error"
+```
+
+Now `T` is inferred only from `states`, and `initialState` is checked against that inferred type. The typo is caught.
+
+This pattern shows up a lot in library code — default values, fallbacks, anything where one argument should *define* the type and another should *conform* to it. If you're building any kind of generic API, `NoInfer` prevents a whole class of inference bugs that are incredibly hard to debug otherwise.
+
+## The real takeaway
+
+None of these patterns are about showing off type-level wizardry. They're about one simple idea: **make the wrong thing impossible to write**.
+
+Every bug you catch at compile time is a bug that never makes it to staging, never wakes you up at 3am, never requires a postmortem. TypeScript's type system is powerful enough to encode real business rules — which states are valid, which IDs go where, which strings are acceptable. Use it.
+
+The compiler is free QA. Let it work.

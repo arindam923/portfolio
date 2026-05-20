@@ -9,6 +9,7 @@ export interface BlogPost {
 	image: string;
 	description: string;
 	tag: string[];
+	readTime: string;
 }
 
 // Cache for blog posts to avoid repeated filesystem reads
@@ -34,13 +35,18 @@ export function getBlogPosts(): BlogPost[] {
 		const tags = data.tags ?? data.tag;
 		const tagArray = Array.isArray(tags) ? tags : tags ? [tags] : ["Engineering"];
 
+		// Calculate realistic dynamic read time
+		const wordCount = fileContents.split(/\s+/).length;
+		const minutes = Math.max(2, Math.ceil(wordCount / 200)); // Average 200 WPM, minimum 2 mins
+
 		return {
 			slug: filename.replace(/\.(mdx|md)$/, ""),
 			title: data.title,
 			date: data.date,
 			image: data.image,
-			description: data.description ?? "A brief overview of this post...",
+			description: data.description ?? data.subtitle ?? "A brief overview of this post...",
 			tag: tagArray,
+			readTime: `${minutes} MIN`,
 		};
 	});
 

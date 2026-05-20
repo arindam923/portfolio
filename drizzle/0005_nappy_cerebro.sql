@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `name` text DEFAULT '' NOT NULL;

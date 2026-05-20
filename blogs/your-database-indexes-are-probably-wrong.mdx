@@ -1,0 +1,317 @@
+---
+title: "Your database indexes are probably wrong"
+subtitle: "Stop guessing, start understanding what your database is actually doing"
+date: "May 12, 2026"
+tags: ["postgresql", "performance", "backend", "databases"]
+image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1600&q=80"
+---
+
+Here's a conversation I've had at least a dozen times:
+
+> "The query is slow."
+> "Did you add an index?"
+> "Yeah, I indexed every column in the WHERE clause."
+> "...and it's still slow?"
+> "Yep."
+
+The problem isn't that indexes don't work. The problem is that most of us treat them like magic dust — sprinkle some on your columns, and things get faster. Sometimes they do. Sometimes they make things *worse*. And most of the time, we never check.
+
+Let me walk you through what's actually happening under the hood, so you can stop guessing and start making decisions that make sense.
+
+## Adding an index doesn't always make things faster
+
+This is the part nobody tells you in the tutorial. Every index you add has a cost:
+
+**Write overhead.** Every `INSERT`, `UPDATE`, and `DELETE` now has to update the index too. Got 5 indexes on a table? Every single write touches all 5. On a table with heavy writes, this can tank your throughput.
+
+**Storage bloat.** Indexes take up disk space. On a table with millions of rows and several indexes, your index storage can exceed the table itself. I've seen indexes on a 2GB table eat up 6GB combined. That's not a typo.
+
+**Stale statistics.** PostgreSQL's query planner uses statistics to decide whether to use an index. If your table has, say, a `status` column where 95% of rows are `'completed'`, an index on `status` is basically useless for filtering `WHERE status = 'completed'` — a sequential scan is faster. The planner knows this. You should too.
+
+```sql
+-- This index looks reasonable...
+CREATE INDEX idx_orders_status ON orders(status);
+
+-- But if 95% of rows have status = 'completed',
+-- PostgreSQL will ignore this index for that value.
+-- It'll seq scan instead. And it's RIGHT to do so.
+```
+
+The rule of thumb: if your query returns more than ~10-15% of the table, an index probably won't help. The planner will just scan the whole thing.
+
+## B-tree, Hash, GIN — picking the right tool
+
+PostgreSQL supports several index types. Most devs only ever use the default (B-tree) without thinking about it. Here's when each one actually matters.
+
+<StepHeader>B-tree (the default)</StepHeader>
+
+This is what you get when you write `CREATE INDEX`. It's a balanced tree structure that keeps data sorted. It's great for:
+
+- Equality checks (`=`)
+- Range queries (`>`, `<`, `BETWEEN`)
+- Sorting (`ORDER BY`)
+- `IS NULL` checks
+
+B-tree handles 90% of use cases. If you're indexing a foreign key, a timestamp, or a numeric ID — B-tree is almost certainly the right call.
+
+```sql
+-- B-tree is the default, these are equivalent:
+CREATE INDEX idx_orders_created ON orders(created_at);
+CREATE INDEX idx_orders_created ON orders USING btree(created_at);
+```
+
+<StepHeader>Hash indexes</StepHeader>
+
+Hash indexes are optimized for **equality checks only**. No ranges, no sorting, no `IS NULL`. Just `WHERE column = value`.
+
+Historically, hash indexes in PostgreSQL were kind of garbage — they weren't WAL-logged before PG 10, meaning they'd corrupt on crash. That's fixed now, but they're still niche. Use them when you have exact-match lookups on large values (like UUIDs or long strings) and you'll never need range queries.
+
+```sql
+CREATE INDEX idx_sessions_token ON sessions USING hash(session_token);
+
+-- Good for: WHERE session_token = 'abc123xyz...'
+-- Useless for: WHERE session_token > 'abc'  (won't use the index)
+```
+
+Honestly, I reach for hash indexes maybe once a year.
+
+<StepHeader>GIN (Generalized Inverted Index)</StepHeader>
+
+GIN is what you want for **composite values** — arrays, JSONB, full-text search. It creates an entry for every element/key inside the value, which means it's amazing for "does this contain X?" queries.
+
+```sql
+-- Indexing a JSONB column
+CREATE INDEX idx_products_attrs ON products USING gin(attributes);
+
+-- Now this is fast:
+SELECT * FROM products WHERE attributes @> '{"color": "red"}';
+
+-- Indexing an array column
+CREATE INDEX idx_posts_tags ON posts USING gin(tags);
+
+-- Fast:
+SELECT * FROM posts WHERE tags @> ARRAY['postgresql'];
+```
+
+The tradeoff? GIN indexes are **expensive to build and update**. They're much slower on writes compared to B-tree. Perfect for read-heavy tables with JSONB or array data. Terrible for tables with constant inserts.
+
+## Composite indexes and the left-prefix rule
+
+This is where things get interesting — and where I see the most mistakes.
+
+A composite index is an index on multiple columns:
+
+```sql
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+```
+
+Here's the thing most people miss: **column order matters. A lot.**
+
+This index is a B-tree sorted first by `user_id`, then by `status` within each `user_id`. Think of it like a phone book sorted by last name, then first name.
+
+That means this index works for:
+
+```sql
+-- ✅ Uses the index (matches left prefix)
+SELECT * FROM orders WHERE user_id = 42;
+
+-- ✅ Uses the index (matches full composite)
+SELECT * FROM orders WHERE user_id = 42 AND status = 'pending';
+
+-- ❌ CANNOT use this index efficiently
+SELECT * FROM orders WHERE status = 'pending';
+```
+
+That last query can't use the index because `status` is the *second* column. You can't look up "first name" in a phone book without knowing the last name first. This is the **left-prefix rule** — a composite index can only be used if the query filters on a *leftmost prefix* of the indexed columns.
+
+So `(user_id, status, created_at)` supports:
+- `WHERE user_id = ?` ✅
+- `WHERE user_id = ? AND status = ?` ✅
+- `WHERE user_id = ? AND status = ? AND created_at > ?` ✅
+- `WHERE status = ? AND created_at > ?` ❌
+- `WHERE created_at > ?` ❌
+
+**Practical tip:** put the column with the highest selectivity (most unique values) first, and the one you'll filter on most frequently. If you always query by `user_id` and sometimes add `status`, the order `(user_id, status)` is correct — not `(status, user_id)`.
+
+## Using EXPLAIN ANALYZE (please stop guessing)
+
+Before you add any index, you should know what your query is *actually doing*. Not what you think it's doing. What it's actually doing.
+
+```sql
+EXPLAIN ANALYZE
+SELECT * FROM orders
+WHERE user_id = 42 AND status = 'pending'
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+`EXPLAIN` shows you the plan. `ANALYZE` actually runs it and gives you real timings. Here's how to read the output:
+
+```
+Limit  (cost=0.43..15.20 rows=10 width=128) (actual time=0.052..0.089 rows=10 loops=1)
+  ->  Index Scan using idx_orders_user_status on orders
+        (cost=0.43..1250.33 rows=847 width=128) (actual time=0.050..0.085 rows=10 loops=1)
+        Index Cond: ((user_id = 42) AND (status = 'pending'))
+        Filter: (status = 'pending')
+Planning Time: 0.185 ms
+Execution Time: 0.112 ms
+```
+
+The things you care about:
+
+- **Seq Scan vs Index Scan** — if you see `Seq Scan` on a large table, that's your problem
+- **actual time** — the real execution time, not the estimate
+- **rows** — compare estimated vs actual. If Postgres estimates 10 rows but gets 50,000, your statistics are stale (`ANALYZE your_table;`)
+- **Filter** — if you see rows being filtered *after* the index scan, your index isn't covering the full condition
+
+## A real before/after
+
+Let me show you a real scenario. We have an `events` table with 5 million rows:
+
+```sql
+CREATE TABLE events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    payload JSONB
+);
+```
+
+The query that's killing us:
+
+```sql
+SELECT * FROM events
+WHERE user_id = 1234
+  AND event_type = 'page_view'
+  AND created_at > NOW() - INTERVAL '7 days'
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+**Before (no index beyond the primary key):**
+
+```
+Limit  (cost=245891.12..245891.17 rows=20 width=312)
+       (actual time=1823.445..1823.461 rows=20 loops=1)
+  ->  Sort  (cost=245891.12..245904.45 rows=5332 width=312)
+            (actual time=1823.443..1823.451 rows=20 loops=1)
+        Sort Key: created_at DESC
+        Sort Method: top-N heapsort  Memory: 35kB
+        ->  Seq Scan on events
+              (cost=0.00..245762.00 rows=5332 width=312)
+              (actual time=0.028..1819.882 rows=4876 loops=1)
+              Filter: ((user_id = 1234) AND (event_type = 'page_view')
+                       AND (created_at > (now() - '7 days'::interval)))
+              Rows Removed by Filter: 4995124
+Planning Time: 0.312 ms
+Execution Time: 1823.502 ms
+```
+
+**1.8 seconds.** Sequential scan on 5 million rows. Filtered out 4,995,124 rows to keep 4,876. Brutal.
+
+Now let's add the right index. Not just any index — the *right* one:
+
+```sql
+CREATE INDEX idx_events_user_type_created
+ON events(user_id, event_type, created_at DESC);
+```
+
+Column order matters here. `user_id` first (equality), then `event_type` (equality), then `created_at DESC` (range + sort). The `DESC` on `created_at` matches our `ORDER BY`, so PostgreSQL can read the index in order without a separate sort step.
+
+**After:**
+
+```
+Limit  (cost=0.56..18.92 rows=20 width=312)
+       (actual time=0.038..0.062 rows=20 loops=1)
+  ->  Index Scan using idx_events_user_type_created on events
+        (cost=0.56..4895.12 rows=5332 width=312)
+        (actual time=0.036..0.058 rows=20 loops=1)
+        Index Cond: ((user_id = 1234) AND (event_type = 'page_view')
+                     AND (created_at > (now() - '7 days'::interval)))
+Planning Time: 0.215 ms
+Execution Time: 0.089 ms
+```
+
+**0.089 milliseconds.** That's a 20,000x improvement. No sequential scan. No separate sort. The index did all the work.
+
+## Partial indexes: the secret weapon
+
+Here's something most developers never use but absolutely should: **partial indexes**.
+
+A partial index only indexes rows that match a condition. Less data in the index means smaller size, faster updates, and faster lookups.
+
+```sql
+-- Instead of indexing ALL orders...
+CREATE INDEX idx_orders_pending ON orders(created_at)
+WHERE status = 'pending';
+```
+
+This index only contains rows where `status = 'pending'`. If you have 10 million orders and only 5,000 are pending, this index is *tiny* compared to a full index.
+
+It works for any query that includes the partial condition:
+
+```sql
+-- ✅ Uses the partial index
+SELECT * FROM orders
+WHERE status = 'pending'
+  AND created_at > NOW() - INTERVAL '24 hours';
+
+-- ❌ Cannot use the partial index (different status)
+SELECT * FROM orders
+WHERE status = 'shipped'
+  AND created_at > NOW() - INTERVAL '24 hours';
+```
+
+Real-world use cases where partial indexes shine:
+
+- **Unprocessed jobs:** `WHERE processed = false` — index only the ones you're still working through
+- **Active users:** `WHERE last_seen > NOW() - INTERVAL '30 days'` — index only recently active users
+- **Soft deletes:** `WHERE deleted_at IS NULL` — index only rows that haven't been deleted
+- **Unique constraints with exceptions:** `CREATE UNIQUE INDEX ... WHERE active = true` — enforce uniqueness only among active records
+
+```sql
+-- Only one active subscription per user
+CREATE UNIQUE INDEX idx_unique_active_subscription
+ON subscriptions(user_id)
+WHERE active = true;
+
+-- This allows multiple inactive subscriptions for the same user
+-- but prevents two active ones. Try doing THAT with a regular unique index.
+```
+
+That last example is one of my favorites. A regular unique constraint can't express "unique, but only among active records." A partial unique index does it perfectly.
+
+## The checklist
+
+Before you add your next index, run through this:
+
+- [ ] Have you actually looked at the query plan with `EXPLAIN ANALYZE`?
+- [ ] Is the table large enough that an index matters? (Under ~10k rows, probably doesn't)
+- [ ] Are you indexing for reads or just adding overhead to writes?
+- [ ] Is the column selective enough? (If 90% of rows have the same value, skip it)
+- [ ] For composite indexes — is the column order correct for your query patterns?
+- [ ] Could a partial index work instead of indexing the full table?
+- [ ] Are you regularly running `ANALYZE` so the planner has fresh statistics?
+
+Look, indexes aren't complicated once you understand the mechanics. The problem is that most of us learned them as "make query fast, add index" and stopped there. Spend an afternoon with `EXPLAIN ANALYZE` on your slowest queries. You'll learn more about your database in those few hours than in years of blindly adding indexes.
+
+Your database is trying to tell you what it needs. You just have to listen.
+
+<Resource
+  title="PostgreSQL Index Types Documentation"
+  description="Official PostgreSQL docs covering all index types and their use cases"
+  href="https://www.postgresql.org/docs/current/indexes-types.html"
+/>
+
+<Resource
+  title="Use The Index, Luke"
+  description="The best free resource on SQL indexing I've ever found — covers everything from B-trees to partial indexes"
+  href="https://use-the-index-luke.com/"
+/>
+
+<Resource
+  title="EXPLAIN Visualizer (depesz)"
+  description="Paste your EXPLAIN ANALYZE output and get a visual breakdown — way easier than reading raw plans"
+  href="https://explain.depesz.com/"
+/>

@@ -1,0 +1,378 @@
+---
+title: "Design APIs that don't make your frontend team mass-quit"
+subtitle: "Practical REST API patterns that separate the good from the rage-inducing"
+date: "January 8, 2026"
+tags: ["api-design", "backend", "node.js", "architecture"]
+image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1600&q=80"
+---
+
+I've consumed a lot of APIs. Some were a joy. Most were not. The bad ones all share the same sins — inconsistent responses, useless errors, pagination that breaks if you sneeze, and authentication docs that read like they were written by someone who hates you personally.
+
+Here's what I've learned about building APIs that people actually want to use.
+
+## The Response Envelope: Pick a Shape and Stick With It
+
+The single most impactful thing you can do for your API consumers is wrap every single response in a consistent envelope. Every. Single. One.
+
+```json
+{
+  "data": null,
+  "error": null,
+  "meta": {}
+}
+```
+
+That's it. Three fields. `data` holds your payload (object, array, whatever). `error` holds error details when something goes wrong. `meta` holds pagination info, rate limit status, request IDs — the housekeeping stuff.
+
+Here's why this matters: your frontend team writes a single API client wrapper once and it works for every endpoint. They're not writing custom parsing logic for each route because `/users` returns an array at the root level but `/users/:id` wraps it in `{ user: {...} }` and `/posts` does something entirely different.
+
+```typescript
+// Frontend code when your API has a consistent envelope
+const { data, error, meta } = await api.get('/users')
+
+if (error) {
+  showToast(error.message)
+  return
+}
+
+setUsers(data)
+setPagination(meta.pagination)
+```
+
+Compare that to the alternative where every endpoint is a surprise party. No thanks.
+
+**Success response:**
+
+```json
+{
+  "data": {
+    "id": "usr_a8k2m",
+    "name": "Arindam Roy",
+    "email": "arindam@example.com"
+  },
+  "error": null,
+  "meta": {
+    "requestId": "req_9f3xk2"
+  }
+}
+```
+
+**Error response:**
+
+```json
+{
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Email is required",
+    "details": [
+      { "field": "email", "rule": "required" }
+    ]
+  },
+  "meta": {
+    "requestId": "req_9f3xk2"
+  }
+}
+```
+
+Same shape. Always. Your frontend devs will send you thank-you notes.
+
+## Pagination: Cursor vs Offset (and Why Offset Breaks)
+
+Most APIs start with offset pagination because it's intuitive: `?page=2&limit=20`. Simple. Clean. And quietly broken.
+
+Here's the problem. User is on page 2. Between loading page 1 and requesting page 2, someone inserts a new record at the top. Now everything shifts by one. The user sees a duplicate item. Or misses one entirely. With high-write tables, this gets worse fast.
+
+**Offset pagination** works fine for:
+- Admin dashboards with low write frequency
+- Datasets that rarely change
+- When you genuinely need "jump to page 47"
+
+**Cursor pagination** is better for everything else:
+
+```
+GET /api/posts?cursor=eyJpZCI6NDJ9&limit=20
+```
+
+The cursor is an opaque token (usually a base64-encoded reference to the last item). The server decodes it, queries `WHERE id > 42 ORDER BY id LIMIT 20`, and returns the next page with a new cursor.
+
+```json
+{
+  "data": [...],
+  "error": null,
+  "meta": {
+    "pagination": {
+      "nextCursor": "eyJpZCI6NjJ9",
+      "prevCursor": "eyJpZCI6NDN9",
+      "hasMore": true
+    }
+  }
+}
+```
+
+No skipped records. No duplicates. Performs well on large datasets because the database uses an index scan instead of counting offsets. The tradeoff is you can't jump to arbitrary pages — but honestly, when was the last time a user actually clicked "page 34"?
+
+## Error Responses That Are Actually Useful
+
+If your API returns `500 Internal Server Error` with no body, we need to talk.
+
+A good error response answers three questions: **what** went wrong, **why**, and **what can the consumer do about it**.
+
+```json
+{
+  "data": null,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "You've exceeded the rate limit of 100 requests per minute",
+    "details": {
+      "limit": 100,
+      "window": "60s",
+      "retryAfter": 23
+    }
+  },
+  "meta": {
+    "requestId": "req_k29xm1"
+  }
+}
+```
+
+Some rules I follow:
+
+- **Use machine-readable error codes**, not just messages. `VALIDATION_ERROR` is parseable. "Something went wrong" is not.
+- **Include field-level errors** for validation failures. Don't make the user guess which of 15 fields was wrong.
+- **Always include a request ID**. When someone reports a bug, `"it broke"` is useless. `"req_k29xm1 returned a 422"` lets you grep your logs in seconds.
+- **Use correct HTTP status codes**. 400 for bad input. 401 for unauthenticated. 403 for unauthorized. 404 for not found. 409 for conflicts. 422 for validation errors. 429 for rate limits. Don't just throw 400 at everything.
+
+## Versioning Without the Nightmares
+
+You have three real options:
+
+**URL path versioning**: `/api/v1/users`
+Simple, explicit, easy to route. The downside? Now you're maintaining two (or three, or four) versions of every endpoint. It gets heavy fast.
+
+**Header versioning**: `Accept: application/vnd.myapi.v2+json`
+Cleaner URLs but harder to test in a browser. Curl commands get longer. Documentation gets confusing.
+
+**Query parameter**: `/api/users?version=2`
+Don't. Just don't. It mixes concerns and caching becomes a mess.
+
+Honestly, URL versioning wins for most teams. It's boring and obvious and that's exactly what you want from infrastructure decisions. But here's the real advice: **design your v1 well enough that you rarely need v2**.
+
+When you do need to make breaking changes, consider additive changes first. Can you add a new field instead of renaming one? Can you add a new endpoint instead of changing an existing one? Most "breaking changes" can be avoided with a bit of creativity.
+
+## Rate Limiting: Tell People What's Happening
+
+If you're rate limiting (and you should be), communicate it through headers:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 73
+X-RateLimit-Reset: 1704700800
+Retry-After: 23
+```
+
+This isn't just politeness — it's self-defense. When consumers know their limits and remaining quota, they can implement backoff strategies themselves. When they don't, they just retry in a tight loop and make everything worse for everyone.
+
+The `Retry-After` header on 429 responses is particularly important. It tells the client exactly when to try again instead of guessing. Most HTTP client libraries respect it automatically.
+
+## The N+1 Problem (From the Consumer Side)
+
+You build a `/posts` endpoint. Your frontend needs the author info for each post. Now they're making 1 request for posts + N requests for authors. Classic.
+
+There are several ways to solve this:
+
+**Includes / Embedding:**
+```
+GET /api/posts?include=author,comments
+```
+
+The server eagerly loads related resources and nests them:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "API Design",
+      "author": { "id": 5, "name": "Arindam" },
+      "comments": [...]
+    }
+  ]
+}
+```
+
+**Sparse fieldsets** (reduce payload size):
+```
+GET /api/posts?fields=id,title,author.name
+```
+
+Only return the fields the consumer actually needs. This is huge for mobile clients where bandwidth matters.
+
+**Compound documents** (JSON:API style):
+
+```json
+{
+  "data": [
+    { "id": 1, "title": "API Design", "authorId": 5 }
+  ],
+  "included": [
+    { "type": "user", "id": 5, "name": "Arindam" }
+  ]
+}
+```
+
+This avoids duplicating the same author object across 20 posts. It's more complex to consume but more efficient on the wire.
+
+Pick the approach that fits your scale. For most apps, simple `?include=` is enough. If you're finding yourself building a query language, maybe consider GraphQL — that's literally what it was designed for.
+
+## Authentication: Bearer Tokens vs API Keys
+
+Quick mental model:
+
+**API keys** are for server-to-server communication. They identify the *application*, not the user. Think: your backend calling a payment gateway. API keys go in headers (`X-API-Key`), never in URLs (those end up in logs).
+
+**Bearer tokens** (usually JWTs) are for user-facing auth. They identify *who* is making the request. They go in the `Authorization` header:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Some guidelines:
+
+- **Short-lived access tokens** (15-30 min) + **refresh tokens** (days/weeks). If an access token leaks, the damage window is small.
+- **Never put tokens in query params**. They get logged, cached, and show up in browser history.
+- **Return clear 401s** with enough info for the client to know whether to refresh or redirect to login.
+- For public APIs, **support both** — API keys for server integrations, OAuth tokens for user-facing apps.
+
+## Putting It All Together: A Real Express Endpoint
+
+Here's what a clean, production-style endpoint actually looks like. Not a toy example — proper validation, error handling, and response formatting:
+
+```typescript
+import { Router, Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
+
+const router = Router()
+
+// -- Response helpers --
+function success(res: Response, data: unknown, meta = {}, status = 200) {
+  return res.status(status).json({ data, error: null, meta })
+}
+
+function fail(res: Response, code: string, message: string, status: number, details?: unknown) {
+  return res.status(status).json({
+    data: null,
+    error: { code, message, details: details ?? null },
+    meta: { requestId: res.locals.requestId },
+  })
+}
+
+// -- Validation schema --
+const CreateUserSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['admin', 'member', 'viewer']).default('member'),
+})
+
+// -- Validation middleware --
+function validate(schema: z.ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body)
+    if (!result.success) {
+      const details = result.error.issues.map((i) => ({
+        field: i.path.join('.'),
+        message: i.message,
+      }))
+      return fail(res, 'VALIDATION_ERROR', 'Invalid request body', 422, details)
+    }
+    req.body = result.data
+    next()
+  }
+}
+
+// -- Routes --
+router.get('/users', async (req: Request, res: Response) => {
+  try {
+    const cursor = req.query.cursor as string | undefined
+    const limit = Math.min(Number(req.query.limit) || 20, 100)
+    const include = (req.query.include as string)?.split(',') ?? []
+
+    // Decode cursor
+    const after = cursor
+      ? JSON.parse(Buffer.from(cursor, 'base64url').toString())
+      : null
+
+    // Build query (pseudo — swap in your ORM)
+    const where = after ? { id: { gt: after.id } } : {}
+    const users = await db.user.findMany({
+      where,
+      take: limit + 1, // fetch one extra to check hasMore
+      orderBy: { id: 'asc' },
+      include: { posts: include.includes('posts') },
+    })
+
+    const hasMore = users.length > limit
+    if (hasMore) users.pop()
+
+    const nextCursor = hasMore
+      ? Buffer.from(JSON.stringify({ id: users.at(-1)!.id })).toString('base64url')
+      : null
+
+    return success(res, users, {
+      pagination: { nextCursor, hasMore, limit },
+    })
+  } catch (err) {
+    return fail(res, 'INTERNAL_ERROR', 'Failed to fetch users', 500)
+  }
+})
+
+router.post('/users', validate(CreateUserSchema), async (req: Request, res: Response) => {
+  try {
+    const existing = await db.user.findUnique({ where: { email: req.body.email } })
+    if (existing) {
+      return fail(res, 'CONFLICT', 'A user with this email already exists', 409)
+    }
+
+    const user = await db.user.create({ data: req.body })
+    return success(res, user, {}, 201)
+  } catch (err) {
+    return fail(res, 'INTERNAL_ERROR', 'Failed to create user', 500)
+  }
+})
+
+export default router
+```
+
+A few things to notice:
+
+- **`success()` and `fail()` helpers** enforce the envelope. You literally can't forget the shape.
+- **Zod validation** happens in middleware, so your route handler only sees clean, typed data.
+- **Cursor pagination** fetches `limit + 1` to determine `hasMore` without a separate count query. That's a small trick that saves a database round trip on every paginated request.
+- **Specific error codes** — `CONFLICT` for duplicate emails, `VALIDATION_ERROR` for bad input. The frontend can switch on these programmatically.
+- **The limit is capped** at 100. Never let consumers request unbounded data. Ever.
+
+## The TL;DR
+
+Good API design isn't about following some spec religiously. It's about empathy for the person on the other end of the HTTP request. Consistent envelopes, meaningful errors, honest rate limit headers, sensible pagination — none of this is hard. It's just discipline.
+
+The best APIs I've used felt like someone actually tried consuming their own API before shipping it. Do that. Build a small frontend against your own endpoints. You'll find every sharp edge in about an hour.
+
+Your frontend team will stop muttering under their breath. And that's worth more than any architectural diagram.
+
+<Resource
+  title="Zalando RESTful API Guidelines"
+  description="One of the most comprehensive and practical API design guideline documents out there. Worth reading front to back."
+  href="https://opensource.zalando.com/restful-api-guidelines/"
+/>
+
+<Resource
+  title="HTTP Status Codes Decision Diagram"
+  description="A visual flowchart for picking the right HTTP status code. Bookmark this one."
+  href="https://github.com/for-GET/http-decision-diagram"
+/>
+
+<Resource
+  title="JSON:API Specification"
+  description="If you want a battle-tested standard for your response format, JSON:API is worth studying even if you don't adopt it wholesale."
+  href="https://jsonapi.org/"
+/>

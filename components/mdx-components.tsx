@@ -185,7 +185,7 @@ export const MDXComponents = {
 		);
 	},
 
-	input: ({ type, checked }: any) => {
+	input: ({ type, checked, ...rest }: any) => {
 		if (type === "checkbox") {
 			return (
 				<div className="relative flex mt-1 shrink-0 items-center justify-center">
@@ -193,6 +193,7 @@ export const MDXComponents = {
 						type="checkbox"
 						defaultChecked={checked}
 						readOnly
+						{...rest}
 						className="peer h-5 w-5 cursor-default appearance-none rounded-[6px] border border-muted-foreground/30 bg-transparent transition-all checked:border-blue-500 checked:bg-blue-500"
 					/>
 					<Check
@@ -202,12 +203,12 @@ export const MDXComponents = {
 				</div>
 			);
 		}
-		return <input type={type} readOnly />;
+		return <input type={type} readOnly {...rest} />;
 	},
 
 	StepHeader: ({ children }: { children: React.ReactNode }) => (
-		<h4 className="mt-8 mb-4 text-[15px] font-medium text-foreground tracking-tight">
+		<span className="block mt-8 mb-4 text-[15px] font-medium text-foreground tracking-tight">
 			{children}
-		</h4>
+		</span>
 	),
 };

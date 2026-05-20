@@ -1,0 +1,345 @@
+---
+title: "React is fast until you make it slow"
+subtitle: "The performance advice nobody gives you — because it requires actually understanding what's happening"
+date: "February 15, 2026"
+tags: ["react", "performance", "frontend", "javascript"]
+image: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?w=1600&auto=format&fit=crop&q=80"
+---
+
+Here's a confession: I spent two weeks optimizing a React app by wrapping every component in `React.memo` and every function in `useCallback`. The app got *slower*. Not by much, but enough that I sat at my desk questioning my career choices.
+
+That experience taught me something most React performance articles won't tell you: **the bottleneck is almost never where you think it is**. And the "best practices" you've been following? Half of them are making things worse.
+
+## Most React performance advice is wrong
+
+Open any "React performance tips" article and you'll find the same list: use `React.memo`, wrap callbacks in `useCallback`, memoize expensive computations with `useMemo`, avoid inline functions. It reads like a checklist. Developers treat it like one too.
+
+The problem? These tips assume the render itself is expensive. In most apps, it's not.
+
+React's reconciliation algorithm is *fast*. Diffing a virtual DOM tree of a few hundred nodes takes microseconds. Your component returning some JSX? That's a function call that returns objects. It's practically free.
+
+The real cost isn't the render. It's what happens *because* of the render:
+
+- Network requests firing inside `useEffect` because a dependency changed unnecessarily
+- Expensive selectors re-computing in state management libraries
+- Layout thrashing from DOM measurements happening in the wrong lifecycle phase
+- State updates cascading through context providers, triggering entire subtrees
+
+So before you start memoizing everything, ask yourself: what is this render actually *doing*?
+
+## The Context API performance trap
+
+This one bites everyone. You create a context, throw some state in it, wrap your app, and call it a day. Then six months later your app feels sluggish and you can't figure out why.
+
+Here's the trap: **any state change in a context provider re-renders every consumer of that context**. Every. Single. One.
+
+```tsx
+// This is a performance bomb
+const AppContext = createContext<{
+  user: User;
+  theme: Theme;
+  notifications: Notification[];
+  sidebarOpen: boolean;
+}>({} as any);
+
+function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState(initialState);
+  return (
+    <AppContext.Provider value={state}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+```
+
+Every time `sidebarOpen` toggles, every component reading `user` or `theme` re-renders. That notification badge in the corner? Re-rendered. The user avatar? Re-rendered. All of them doing absolutely nothing with `sidebarOpen`.
+
+<StepHeader>Fix #1: Split your contexts</StepHeader>
+
+The simplest fix is also the most effective. Separate state by how frequently it changes and who consumes it:
+
+```tsx
+const UserContext = createContext<User | null>(null);
+const ThemeContext = createContext<Theme>(defaultTheme);
+const SidebarContext = createContext<{
+  open: boolean;
+  toggle: () => void;
+}>({ open: false, toggle: () => {} });
+```
+
+Now toggling the sidebar only re-renders components that actually care about the sidebar. This alone fixed a 200ms interaction delay in a project I worked on last year.
+
+<StepHeader>Fix #2: useSyncExternalStore for surgical updates</StepHeader>
+
+For more complex cases, `useSyncExternalStore` lets you subscribe to a store and only re-render when *your specific slice* of state changes:
+
+```tsx
+import { useSyncExternalStore } from 'react';
+
+// A simple store
+const store = {
+  state: { count: 0, name: 'Arindam' },
+  listeners: new Set<() => void>(),
+
+  subscribe(listener: () => void) {
+    store.listeners.add(listener);
+    return () => store.listeners.delete(listener);
+  },
+
+  setState(partial: Partial<typeof store.state>) {
+    store.state = { ...store.state, ...partial };
+    store.listeners.forEach(fn => fn());
+  },
+
+  getSnapshot() {
+    return store.state;
+  }
+};
+
+// Only re-renders when `count` changes, ignores `name` changes
+function useCount() {
+  const count = useSyncExternalStore(
+    store.subscribe,
+    () => store.getSnapshot().count
+  );
+  return count;
+}
+```
+
+This is essentially what Zustand does under the hood. If you find yourself building this pattern more than once, just use Zustand. Seriously. It's 1KB and it solves this exact problem.
+
+## Stop using useMemo and useCallback everywhere
+
+I know this sounds like heresy. Bear with me.
+
+Every `useMemo` and `useCallback` has a cost:
+- Memory to store the memoized value
+- A dependency array comparison on every render
+- Cognitive overhead for every developer reading the code
+- A false sense of security that "this is optimized now"
+
+Here's a component I see in code reviews all the time:
+
+```tsx
+// Please stop doing this
+function UserCard({ user }: { user: User }) {
+  const fullName = useMemo(
+    () => `${user.firstName} ${user.lastName}`,
+    [user.firstName, user.lastName]
+  );
+
+  const handleClick = useCallback(() => {
+    navigate(`/users/${user.id}`);
+  }, [user.id]);
+
+  return (
+    <div onClick={handleClick}>
+      <span>{fullName}</span>
+    </div>
+  );
+}
+```
+
+String concatenation takes nanoseconds. The `useMemo` wrapping it is more expensive than just doing the concatenation. And that `useCallback`? Unless `div` is actually a memoized component (it isn't — it's a native element), wrapping the handler gains you absolutely nothing.
+
+**When you actually should memoize:**
+
+1. **Expensive computations** — sorting/filtering thousands of items, complex math, parsing large datasets. If it takes more than ~1ms, memoize it.
+2. **Referential equality for effect dependencies** — when an object or function is in a `useEffect` dependency array, and recreating it triggers the effect unnecessarily.
+3. **Props to memoized children** — you have a child wrapped in `React.memo` and you're passing it an object/function that would break the memo otherwise.
+4. **Context provider values** — always memoize your context value objects, or every consumer re-renders on every provider render.
+
+```tsx
+// This one actually matters
+function SearchResults({ query }: { query: string }) {
+  const results = useMemo(
+    () => fuse.search(query).map(r => r.item),
+    [query]
+  );
+
+  return <VirtualizedList items={results} />;
+}
+```
+
+The rule of thumb: profile first, memoize second. If you can't measure the improvement, you didn't need it.
+
+## Server Components changed everything
+
+Look, I was skeptical about Server Components. "Great, another rendering paradigm to learn." But after using them for real work, I get it now. They're not another client-side optimization trick — they fundamentally change what ships to the browser.
+
+With traditional React, the performance conversation is always about *minimizing work on the client*. Server Components flip it: **don't send the work to the client at all**.
+
+```tsx
+// This component's code never reaches the browser.
+// No JS bundle cost. No hydration. No re-renders. Ever.
+async function BlogPost({ slug }: { slug: string }) {
+  const post = await db.posts.findUnique({ where: { slug } });
+  const author = await db.users.findUnique({ where: { id: post.authorId } });
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <AuthorBio author={author} />
+      <MDXContent content={post.content} />
+      {/* Only this part ships JS to the client */}
+      <LikeButton postId={post.id} />
+    </article>
+  );
+}
+```
+
+That MDX parser, the date formatting library, the markdown renderer — none of that code goes to the client. I moved a blog page to Server Components and the JS bundle for that route dropped from 84KB to 11KB. Not gzipped. The actual parsed JavaScript the browser has to execute.
+
+The mental model shift: stop thinking about how to make your client-side code faster. Start thinking about whether it needs to be client-side at all.
+
+## Virtualization: when to use it, when to chill
+
+If you're rendering a list of 50 items, you don't need virtualization. I've seen developers add `react-window` to a list of 20 items. The virtualization overhead was more expensive than just rendering 20 divs.
+
+Here's my rough guide:
+
+- **< 100 items**: Just render them. Seriously.
+- **100–500 items**: Maybe paginate instead. Users don't scroll through 300 items anyway.
+- **500+ items**: Now we're talking virtualization.
+- **10,000+ items**: Virtualize AND paginate the data source. Don't load 10K items into memory.
+
+When you do virtualize, `@tanstack/react-virtual` is my go-to these days:
+
+```tsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+function BigList({ items }: { items: Item[] }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64, // estimated row height in px
+    overscan: 5, // render 5 extra items above/below viewport
+  });
+
+  return (
+    <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+        {virtualizer.getVirtualItems().map(virtualRow => (
+          <div
+            key={virtualRow.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: `${virtualRow.size}px`,
+              transform: `translateY(${virtualRow.start}px)`,
+            }}
+          >
+            <ListItem item={items[virtualRow.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+One gotcha: virtualization can break `Cmd+F` search since off-screen items aren't in the DOM. If searchability matters, consider a different approach — or add your own search UI.
+
+## How to actually read the React DevTools Profiler
+
+Most developers open the Profiler, see a bunch of colored bars, go "hmm, interesting," and close it. Here's what to actually look for.
+
+**Step 1: Record an interaction.** Click "Record," do the thing that feels slow, click "Stop." Don't just let it record while you casually browse around.
+
+**Step 2: Look at the flame chart.** The width of each bar is the render duration. But here's what people miss — **the gray bars matter most**. Gray means "did not render." If you see a component that's *not* gray when it should be, that's your problem.
+
+**Step 3: Check "Why did this render?"** In the component sidebar, React tells you exactly why: state changed, props changed, parent rendered, or hooks changed. This is the detective work.
+
+**Step 4: Look for cascading patterns.** One state update causing 15 components to render, each one taking 2ms — that's 30ms total. No single component is slow, but the cascade is the problem.
+
+**Step 5: Use the "Ranked" view.** It sorts components by render time. The top few are your actual bottlenecks. Everything else is noise.
+
+> The Profiler doesn't lie, but it also doesn't interpret. A component rendering in 0.1ms a hundred times is a 10ms problem. A component rendering in 50ms once is a 50ms problem. Focus on the bigger number.
+
+## The 47 re-renders: a war story
+
+Last year I was building a dashboard. Users complained that clicking a filter dropdown was laggy. I opened the Profiler, clicked the dropdown once, and watched in horror as one component — a data table — re-rendered **47 times** from a single click.
+
+Here's what happened, layer by layer:
+
+The dropdown used a state setter that looked innocent:
+
+```tsx
+const [filters, setFilters] = useState<Filters>(defaultFilters);
+
+function onFilterChange(key: string, value: string) {
+  setFilters(prev => ({ ...prev, [key]: value }));
+}
+```
+
+Fine so far. But `filters` was in a context. And that context was consumed by a `useEffect` in the data table:
+
+```tsx
+useEffect(() => {
+  fetchData(filters).then(setData);
+}, [filters]); // <-- filters is a new object every time
+```
+
+Every state update created a new `filters` object. The `useEffect` saw a "new" dependency. It fired `fetchData`. `fetchData` called `setData`. `setData` triggered another render. But wait — there was *also* a debounce wrapper that wasn't actually debouncing because it was recreated on every render:
+
+```tsx
+// The bug: this creates a NEW debounced function every render
+const debouncedFetch = debounce(() => fetchData(filters), 300);
+```
+
+Each render created a fresh debounce timer. None of them actually debounced anything. Forty-seven renders, forty-seven fetch calls, forty-seven state updates.
+
+**The fix** was three lines:
+
+```tsx
+// 1. Stable reference for the debounced function
+const debouncedFetch = useMemo(
+  () => debounce((f: Filters) => fetchData(f).then(setData), 300),
+  [] // stable — takes filters as argument instead of closing over them
+);
+
+// 2. Use the filters as an argument, not a closure
+useEffect(() => {
+  debouncedFetch(filters);
+}, [filters, debouncedFetch]);
+```
+
+Forty-seven renders became one. The dropdown went from 400ms to instant. Three lines of actual code change.
+
+The lesson isn't "use useMemo for debounce." The lesson is: **the Profiler will show you the symptom (47 renders), but you have to trace the cause yourself.** It's always a chain — a state update causing an effect causing another state update causing another effect. Find the chain, break it.
+
+## The actual takeaway
+
+React performance optimization is debugging, not decoration. You don't sprinkle `useMemo` on your code like seasoning. You find the specific thing that's slow, understand *why* it's slow, and fix that specific thing.
+
+Here's my process, every time:
+
+- [ ] **Measure first.** Use the Profiler. Find the actual bottleneck.
+- [ ] **Check the chain.** Is a state update triggering effects triggering more state updates?
+- [ ] **Question the architecture.** Should this be a Server Component? Is the context too broad? Is the data fetching in the wrong place?
+- [ ] **Apply the smallest fix.** Split a context. Move a computation to the server. Virtualize that one list.
+- [ ] **Measure again.** If you can't prove it's faster, revert it.
+
+The fastest code is code that doesn't run. Before you optimize how React renders on the client, ask if it needs to render on the client at all.
+
+<Resource
+  title="React DevTools Profiler Guide"
+  description="Official React docs on using the Profiler to diagnose performance issues"
+  href="https://react.dev/reference/react/Profiler"
+/>
+
+<Resource
+  title="TanStack Virtual"
+  description="Headless virtualization library — the modern replacement for react-window"
+  href="https://tanstack.com/virtual/latest"
+/>
+
+<Resource
+  title="useSyncExternalStore docs"
+  description="React's built-in hook for subscribing to external stores with selective re-rendering"
+  href="https://react.dev/reference/react/useSyncExternalStore"
+/>
