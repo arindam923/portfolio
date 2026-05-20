@@ -2,9 +2,26 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-const client = createClient({
-    url: process.env.TURSO_CONNECTION_URL || "file:local.db",
-    authToken: process.env.TURSO_AUTH_TOKEN || "dummy",
-});
+let _db: ReturnType<typeof drizzle> | null = null;
 
-export const db = drizzle(client, { schema });
+function getDb() {
+	if (!_db) {
+		const url = process.env.TURSO_CONNECTION_URL;
+		const authToken = process.env.TURSO_AUTH_TOKEN;
+
+		if (!url || !authToken) {
+			throw new Error("Missing TURSO_CONNECTION_URL or TURSO_AUTH_TOKEN environment variables");
+		}
+
+		const client = createClient({ url, authToken });
+		_db = drizzle(client, { schema });
+	}
+	return _db;
+}
+
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+	get(_target, prop) {
+		const database = getDb();
+		return Reflect.get(database, prop);
+	},
+});

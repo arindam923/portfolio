@@ -223,7 +223,7 @@ export async function POST(req: Request) {
 
 		return NextResponse.json({ success: true, queued: true });
 	} catch (error) {
-		console.error("Contact API Error:", error);
+		console.error("Contact API Error:", error instanceof Error ? error.message : error);
 		return NextResponse.json(
 			{ error: "Failed to process message" },
 			{ status: 500 }
