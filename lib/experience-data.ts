@@ -14,6 +14,27 @@ export interface ExperienceEntry {
 
 export const experiences: ExperienceEntry[] = [
 	{
+		id: "0",
+		company: "sploink.ai",
+		role: "Lead Platform Engineer",
+		period: "04/2026 - 06/2026",
+		location: "India",
+		logo: "https://api.dicebear.com/7.x/pixel-art/svg?seed=sploink",
+		links: [{ type: "globe", url: "https://sploink.ai" }],
+		description: [
+			"Architected an AI observability platform designed to monitor agent networks, reducing LLM token consumption and optimizing execution costs.",
+			"Implemented an intelligent dynamic skills library and caching system to increase AI performance and execution speed.",
+			"Developed an Agent Launcher Wizard accessible via browser and mobile web interfaces, enabling remote management and control of AI agents from anywhere."
+		],
+		technologies: [
+			{ name: "TypeScript", icon: "https://cdn.simpleicons.org/typescript/3178C6" },
+			{ name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/FFFFFF" },
+			{ name: "Python", icon: "https://cdn.simpleicons.org/python/3776AB" },
+			{ name: "FastAPI", icon: "https://cdn.simpleicons.org/fastapi/009688" },
+			{ name: "WebSockets", icon: "https://cdn.simpleicons.org/socketdotio/010101" }
+		],
+	},
+	{
 		id: "1",
 		company: "VA Bear",
 		role: "Head of Engineering",

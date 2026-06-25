@@ -10,9 +10,25 @@ function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getCodeString = (node: any): string => {
+	if (!node) return "";
+	if (typeof node === "string") return node;
+	if (typeof node === "number") return String(node);
+	if (Array.isArray(node)) {
+		return node.map(getCodeString).join("");
+	}
+	if (node.props) {
+		const isLine = node.props["data-line"] !== undefined;
+		const text = getCodeString(node.props.children);
+		return isLine ? text + "\n" : text;
+	}
+	return "";
+};
+
 export const MDXComponents = {
 	pre: ({ children, ...props }: any) => {
-		const codeString = children.props.children ?? "";
+		const codeString = getCodeString(children).replace(/\n$/, "");
 		return (
 			<div className="group relative my-8 rounded-[24px] border border-border bg-card p-2 shadow-xl">
 				<CopyButton code={codeString} />

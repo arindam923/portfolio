@@ -66,7 +66,10 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 					[
 						rehypePrettyCode,
 						{
-							theme: "github-dark-default",
+							theme: {
+								dark: "github-dark-default",
+								light: "github-light-default",
+							},
 							keepBackground: false,
 						},
 					],
@@ -81,15 +84,15 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 			<div className="mb-6 mt-0">
 				<Link
 					href="/blog"
-					className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-zinc-900 bg-zinc-950/80 hover:bg-zinc-900/40 text-xs font-mono text-zinc-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-300 group shadow-md"
+					className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-900 bg-zinc-50/80 dark:bg-zinc-950/80 hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 text-xs font-mono text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-all duration-300 group shadow-sm dark:shadow-md"
 				>
-					<span className="text-emerald-500 group-hover:translate-x-[-1px] transition-transform">❯</span>
-					<span className="font-semibold text-zinc-400 group-hover:text-zinc-200 transition-colors">cd ..</span>
-					<span className="text-zinc-700">/</span>
-					<span className="text-[10px] text-zinc-600 font-sans group-hover:text-zinc-300 transition-colors">
+					<span className="text-emerald-600 dark:text-emerald-500 group-hover:translate-x-[-1px] transition-transform">❯</span>
+					<span className="font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors">cd ..</span>
+					<span className="text-zinc-300 dark:text-zinc-700">/</span>
+					<span className="text-[10px] text-zinc-500 dark:text-zinc-600 font-sans group-hover:text-zinc-800 dark:group-hover:text-zinc-300 transition-colors">
 						index
 					</span>
-					<span className="w-1.5 h-3 bg-emerald-500/80 rounded-sm opacity-0 group-hover:opacity-100 group-hover:animate-pulse transition-all ml-0.5 duration-200" />
+					<span className="w-1.5 h-3 bg-emerald-600 dark:bg-emerald-500/80 rounded-sm opacity-0 group-hover:opacity-100 group-hover:animate-pulse transition-all ml-0.5 duration-200" />
 				</Link>
 			</div>
 
@@ -102,7 +105,7 @@ const BlogPost = async ({ params }: { params: Promise<{ slug: string }> }) => {
 			/>
 
 			{/* Main MDX Content */}
-			<div className="max-w-none text-zinc-300 prose prose-invert prose-headings:text-white prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-code:font-mono prose-pre:bg-zinc-950/60 prose-pre:border prose-pre:border-zinc-800">
+			<div className="max-w-none text-zinc-700 dark:text-zinc-300 text-sm sm:text-[15px] prose dark:prose-invert prose-headings:text-zinc-900 dark:prose-headings:text-white prose-a:text-emerald-600 dark:prose-a:text-emerald-400 hover:prose-a:text-emerald-700 dark:hover:prose-a:text-emerald-300 prose-code:font-mono prose-pre:bg-zinc-50 dark:prose-pre:bg-zinc-950/60 prose-pre:border prose-pre:border-zinc-200 dark:prose-pre:border-zinc-800">
 				{content}
 			</div>
 

@@ -37,21 +37,21 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: 0.5, duration: 0.8, ease: [0.2, 0, 0, 1] }}
 		>
-			<div className="bg-zinc-950/85 backdrop-blur-xl border border-zinc-800 rounded-xl h-11 flex items-center px-3.5 justify-between shadow-2xl">
+			<div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-xl h-11 flex items-center px-3.5 justify-between shadow-lg dark:shadow-2xl">
 				{/* File/Post title status */}
 				<div className="flex items-center gap-2 overflow-hidden ml-0.5">
 					<div className="relative flex h-1.5 w-1.5 shrink-0">
 						<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
 						<span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
 					</div>
-					<span className="text-[11px] font-mono font-medium text-zinc-400 truncate max-w-[170px] uppercase tracking-wider">
+					<span className="text-[11px] font-mono font-medium text-zinc-500 dark:text-zinc-400 truncate max-w-[170px] uppercase tracking-wider">
 						{blog.title}
 					</span>
 				</div>
 
 				{/* Telemetry percentage and ring */}
 				<div className="flex items-center gap-2.5 flex-shrink-0">
-					<span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-900/30 px-1.5 py-0.5 rounded">
+					<span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-250 dark:border-emerald-900/30 px-1.5 py-0.5 rounded">
 						SYS.READ: {percent}%
 					</span>
 
@@ -61,7 +61,7 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 								cx="14"
 								cy="14"
 								r={radius}
-								className="stroke-zinc-900"
+								className="stroke-zinc-100 dark:stroke-zinc-900"
 								strokeWidth="2"
 								fill="transparent"
 							/>
@@ -69,7 +69,7 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 								cx="14"
 								cy="14"
 								r={radius}
-								className="stroke-emerald-400"
+								className="stroke-emerald-500 dark:stroke-emerald-400"
 								strokeWidth="2"
 								strokeDasharray={circumference}
 								style={{ strokeDashoffset: dashOffset }}
@@ -85,4 +85,3 @@ const FloatingBar = ({ blog }: FloatingBarProps) => {
 };
 
 export default FloatingBar;
-

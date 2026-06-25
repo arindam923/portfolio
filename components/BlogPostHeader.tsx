@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useMemo } from "react";
-import { Heart, Share, Calendar, Code, Eye, Check, Terminal, FileText } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Share, Calendar, Check, Terminal, FileText, Clock, GitCommit } from "lucide-react";
 
 interface BlogPostHeaderProps {
 	title: string;
@@ -18,9 +16,7 @@ export function BlogPostHeader({
 	subtitle = "",
 	date = "",
 	tags = [],
-	image = "",
 }: BlogPostHeaderProps) {
-	const [viewMode, setViewMode] = useState<"visual" | "yaml">("visual");
 	const [liked, setLiked] = useState(false);
 	const [shared, setShared] = useState(false);
 
@@ -56,195 +52,102 @@ export function BlogPostHeader({
 
 	return (
 		<header className="mb-12 mt-4 md:mt-6">
-			{/* Simulated Shell Path */}
-			<div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-zinc-500 font-mono mb-4 px-1 overflow-hidden min-w-0 select-none">
-				<Terminal className="w-3.5 h-3.5 text-emerald-500 animate-pulse shrink-0" />
-				<span className="opacity-60 shrink-0">~</span>
-				<span className="text-zinc-600 shrink-0">/</span>
-				<span className="text-zinc-400 shrink-0 hidden sm:inline">portfolio</span>
-				<span className="text-zinc-600 shrink-0 hidden sm:inline">/</span>
-				<span className="text-zinc-400 shrink-0 hidden sm:inline">blogs</span>
-				<span className="text-zinc-450 shrink-0 sm:hidden">...</span>
-				<span className="text-zinc-600 shrink-0">/</span>
-				<span className="text-emerald-400 font-medium truncate min-w-0">
+			{/* Simulated Shell Path - Minimal Tech Detail */}
+			<div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground/60 font-mono mb-6 px-0.5 select-none">
+				<Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500 shrink-0" />
+				<span className="opacity-60">~</span>
+				<span>/</span>
+				<span>blog</span>
+				<span>/</span>
+				<span className="text-emerald-600 dark:text-emerald-400 font-medium truncate">
 					{(title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || "untitled"}.mdx
 				</span>
 			</div>
 
-			{/* IDE Pane Container */}
-			<div className="border border-zinc-800 bg-zinc-950/80 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-				{/* Tab Bar / Header Control */}
-				<div className="flex items-center justify-between gap-3 px-4 py-3 bg-zinc-900/60 border-b border-zinc-850 select-none">
-					{/* Window control dots */}
-					<div className="hidden sm:flex items-center gap-2 shrink-0">
-						<span className="w-3 h-3 rounded-full bg-rose-500/80 border border-rose-600/30" />
-						<span className="w-3 h-3 rounded-full bg-amber-500/80 border border-amber-600/30" />
-						<span className="w-3 h-3 rounded-full bg-emerald-500/80 border border-emerald-600/30" />
-					</div>
+			{/* Main Title & Subtitle styled like the main Blog listing page */}
+			<div className="space-y-4 mb-8">
+				<h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground font-display leading-[1.1] selection:bg-emerald-500/20">
+					{title}
+				</h1>
+				{subtitle && (
+					<p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base md:text-lg max-w-3xl font-sans leading-relaxed selection:bg-emerald-500/20">
+						{subtitle}
+					</p>
+				)}
+			</div>
 
-					{/* IDE Active Tab */}
-					<div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-950 border border-zinc-850 rounded-lg text-xs font-mono text-zinc-300 min-w-0 max-w-[150px] sm:max-w-xs overflow-hidden">
-						<FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-						<span className="truncate min-w-0">{(title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || "untitled"}.mdx</span>
-						<span className="text-[10px] text-zinc-600 hover:text-rose-400 transition-colors ml-1 cursor-pointer shrink-0">×</span>
+			{/* Metadata and Actions Row */}
+			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-y border-zinc-100 dark:border-zinc-900 font-mono text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 select-none">
+				{/* Informative Stats */}
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+					<div className="flex items-center gap-1.5">
+						<Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500/80" />
+						<span>{date}</span>
 					</div>
-
-					{/* Mode Toggles */}
-					<div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-850 shrink-0">
-						<button
-							onClick={() => setViewMode("yaml")}
-							className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[10px] sm:text-[11px] font-mono font-medium transition-all cursor-pointer ${
-								viewMode === "yaml"
-									? "bg-zinc-850 text-emerald-400 font-bold"
-									: "text-zinc-500 hover:text-zinc-300"
-							}`}
-							title="View YAML Frontmatter"
-						>
-							<Code className="w-3 h-3" />
-							<span>YAML</span>
-						</button>
-						<button
-							onClick={() => setViewMode("visual")}
-							className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[10px] sm:text-[11px] font-mono font-medium transition-all cursor-pointer ${
-								viewMode === "visual"
-									? "bg-zinc-850 text-emerald-400 font-bold"
-									: "text-zinc-500 hover:text-zinc-300"
-							}`}
-							title="View Formatted Info"
-						>
-							<Eye className="w-3 h-3" />
-							<span>PREVIEW</span>
-						</button>
+					<span className="text-zinc-300 dark:text-zinc-800 hidden xs:inline">|</span>
+					<div className="flex items-center gap-1.5">
+						<Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500/80" />
+						<span>4 Min Read</span>
+					</div>
+					<span className="text-zinc-300 dark:text-zinc-800 hidden sm:inline">|</span>
+					<div className="flex items-center gap-1.5">
+						<FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500/80" />
+						<span>{docSizeKB} KB</span>
+					</div>
+					<span className="text-zinc-300 dark:text-zinc-800 hidden md:inline">|</span>
+					<div className="flex items-center gap-1.5">
+						<GitCommit className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500/80" />
+						<span className="text-zinc-400 dark:text-zinc-500">{commitSha}</span>
 					</div>
 				</div>
 
-				{/* Panel Content Area */}
-				<div className="p-6 font-mono">
-					<AnimatePresence mode="wait">
-						{viewMode === "yaml" ? (
-							<motion.div
-								key="yaml"
-								initial={{ opacity: 0, y: 5 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -5 }}
-								transition={{ duration: 0.2 }}
-								className="text-xs sm:text-sm leading-relaxed overflow-x-auto selection:bg-emerald-500/20"
-							>
-								{/* Syntax Highlighted YAML Rendering */}
-								<pre className="text-zinc-400 whitespace-pre">
-									<span className="text-zinc-600">---</span>{"\n"}
-									<span className="text-zinc-500">title</span>: <span className="text-emerald-400">&quot;{title}&quot;</span>{"\n"}
-									<span className="text-zinc-500">subtitle</span>: <span className="text-zinc-300">&quot;{subtitle}&quot;</span>{"\n"}
-									<span className="text-zinc-500">date</span>: <span className="text-amber-400">&quot;{date}&quot;</span>{"\n"}
-									<span className="text-zinc-500">commit</span>: <span className="text-purple-400">&quot;{commitSha}&quot;</span>{"\n"}
-									<span className="text-zinc-500">status</span>: <span className="text-teal-400">&quot;STABLE_BUILD&quot;</span>{"\n"}
-									<span className="text-zinc-500">read_time</span>: <span className="text-sky-400">&quot;4 min&quot;</span>{"\n"}
-									<span className="text-zinc-500">size</span>: <span className="text-orange-400">&quot;{docSizeKB} KB&quot;</span>{"\n"}
-									<span className="text-zinc-500">tags</span>: [<span className="text-emerald-500">{(tags || []).map(t => `&quot;${t}&quot;`).join(", ")}</span>]{"\n"}
-									<span className="text-zinc-600">---</span>
-								</pre>
-							</motion.div>
-						) : (
-							<motion.div
-								key="visual"
-								initial={{ opacity: 0, y: 5 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -5 }}
-								transition={{ duration: 0.2 }}
-								className="flex flex-col gap-6"
-							>
-								{/* GUI Telemetry View */}
-								<div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-									<div className="p-2.5 sm:p-3.5 bg-zinc-900/40 rounded-xl border border-zinc-850 flex flex-col gap-1">
-										<span className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Commit SHA</span>
-										<span className="text-xs sm:text-sm text-purple-400 font-bold truncate">{commitSha}</span>
-									</div>
-									<div className="p-2.5 sm:p-3.5 bg-zinc-900/40 rounded-xl border border-zinc-850 flex flex-col gap-1">
-										<span className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Build Status</span>
-										<span className="text-xs sm:text-sm text-emerald-400 flex items-center gap-1.5 font-bold">
-											<span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-											STABLE
-										</span>
-									</div>
-									<div className="p-2.5 sm:p-3.5 bg-zinc-900/40 rounded-xl border border-zinc-850 flex flex-col gap-1">
-										<span className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">File Weight</span>
-										<span className="text-xs sm:text-sm text-orange-400 font-bold">{docSizeKB} KB</span>
-									</div>
-									<div className="p-2.5 sm:p-3.5 bg-zinc-900/40 rounded-xl border border-zinc-850 flex flex-col gap-1">
-										<span className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Read Speed</span>
-										<span className="text-xs sm:text-sm text-sky-400 font-bold truncate">4 Min Read</span>
-									</div>
-								</div>
+				{/* Quick Actions */}
+				<div className="flex items-center gap-2">
+					<button
+						onClick={() => setLiked(!liked)}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 cursor-pointer ${
+							liked
+								? "border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/10 text-rose-600 dark:text-rose-400"
+								: "border-zinc-200 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-950/20 text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/20 dark:hover:border-rose-500/20"
+						}`}
+						title="Bookmark post"
+					>
+						<Heart className={`w-3.5 h-3.5 transition-transform duration-300 active:scale-125 ${liked ? "fill-rose-600 dark:fill-rose-400 text-rose-600 dark:text-rose-400" : ""}`} />
+						<span className="text-[10px] font-bold tracking-wider">
+							{liked ? "SAVED" : "SAVE"}
+						</span>
+					</button>
 
-								<div className="border-t border-zinc-900/80 pt-4">
-									<h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white font-sans leading-tight mb-2">
-										{title}
-									</h2>
-									<p className="text-sm text-zinc-400 font-sans leading-relaxed">
-										{subtitle}
-									</p>
-								</div>
-							</motion.div>
-						)}
-					</AnimatePresence>
-
-					{/* IDE Action Bar / Bottom Toolbar */}
-					<div className="flex flex-wrap items-center justify-between gap-4 mt-6 pt-5 border-t border-zinc-900">
-						{/* Metadata badges */}
-						<div className="flex flex-wrap gap-1.5">
-							{(tags || []).map((tag) => (
-								<span
-									key={tag}
-									className="px-2 py-0.5 text-[10px] text-zinc-400 bg-zinc-900/80 border border-zinc-850 rounded hover:border-emerald-500/35 transition-colors cursor-default"
-								>
-									#{(tag || "").toLowerCase()}
-								</span>
-							))}
-						</div>
-
-						{/* Action Buttons */}
-						<div className="flex items-center gap-3">
-							{/* Timestamp/Date */}
-							<div className="flex items-center gap-1.5 text-xs text-zinc-500 mr-2">
-								<Calendar className="w-3.5 h-3.5 text-zinc-600" />
-								<span>{date}</span>
-							</div>
-
-							<div className="h-4 w-px bg-zinc-900 hidden sm:block" />
-
-							{/* Actions */}
-							<div className="flex gap-2">
-								<button
-									onClick={() => setLiked(!liked)}
-									className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all cursor-pointer ${
-										liked
-											? "border-rose-500/30 bg-rose-950/20 text-rose-400"
-											: "border-zinc-850 bg-zinc-900/40 text-zinc-500 hover:text-zinc-300 hover:border-zinc-800"
-									}`}
-									title="Bookmark"
-								>
-									<Heart className={`w-3.5 h-3.5 ${liked ? "fill-rose-400" : ""}`} />
-								</button>
-								<button
-									onClick={handleShare}
-									className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all cursor-pointer ${
-										shared
-											? "border-emerald-500/30 bg-emerald-950/25 text-emerald-400"
-											: "border-zinc-850 bg-zinc-900/40 text-zinc-500 hover:text-zinc-300 hover:border-zinc-800"
-									}`}
-									title="Copy Link"
-								>
-									{shared ? <Check className="w-3.5 h-3.5" /> : <Share className="w-3.5 h-3.5" />}
-								</button>
-							</div>
-						</div>
-					</div>
+					<button
+						onClick={handleShare}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 cursor-pointer ${
+							shared
+								? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/15 text-emerald-600 dark:text-emerald-400"
+								: "border-zinc-200 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-950/20 text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/20 dark:hover:border-emerald-500/20"
+						}`}
+						title="Copy share link"
+					>
+						{shared ? <Check className="w-3.5 h-3.5" /> : <Share className="w-3.5 h-3.5" />}
+						<span className="text-[10px] font-bold tracking-wider">
+							{shared ? "COPIED" : "SHARE"}
+						</span>
+					</button>
 				</div>
 			</div>
 
-			{/* Decorative grid pattern separator */}
-			<div className="w-full h-1 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_70%)] mt-12 mb-1" />
+			{/* Tags display */}
+			{tags && tags.length > 0 && (
+				<div className="flex flex-wrap gap-1.5 mt-4">
+					{tags.map((tag) => (
+						<span
+							key={tag}
+							className="px-2.5 py-0.5 text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/60 rounded-md hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-default"
+						>
+							#{tag.toLowerCase()}
+						</span>
+					))}
+				</div>
+			)}
 		</header>
 	);
 }
-
