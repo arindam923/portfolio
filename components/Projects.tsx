@@ -327,8 +327,8 @@ interface ProjectDetailModalProps {
 const HighlightedCode = ({ code }: { code: string }) => {
 	const tokenRegex = /(\/\/.*|#\[.*?\]|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+\b|\b(?:import|from|const|let|async|await|fn|pub|use|return|function|export|struct|impl|mut|match|if|else|new)\b|\b(?:String|Result|AudioResponse|Client|Databases|McpServer|Stripe|Array|number|string|boolean|void|any|Record)\b|\b\w+(?=\()|[\w]+|[^\s\w]+|\s+)/g;
 
-	const tokens = [];
-	let match;
+	const tokens: string[] = [];
+	let match: RegExpExecArray | null;
 	while ((match = tokenRegex.exec(code)) !== null) {
 		tokens.push(match[0]);
 	}
