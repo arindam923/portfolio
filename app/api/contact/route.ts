@@ -106,15 +106,12 @@ async function sendThankYouEmail(name: string, contact: string, subject: string)
 					<h1 style="font-size: 26px; font-weight: 700; margin: 0 0 16px; color: #fafafa; line-height: 1.3;">
 						Thanks for reaching out, ${name} 👋
 					</h1>
-					<p style="font-size: 15px; line-height: 1.7; color: #a1a1aa; margin: 0 0 24px;">
-						I received your message about <strong style="color: #d4d4d8;">"${subject}"</strong> and I'll get back to you as soon as I can — usually within a day or two.
-					</p>
 					<p style="font-size: 15px; line-height: 1.7; color: #a1a1aa; margin: 0 0 32px;">
-						In the meantime, feel free to check out my work or connect with me on LinkedIn.
+						I received your message about <strong style="color: #d4d4d8;">"${subject}"</strong> and I'll get back to you as soon as I can — usually within a day or two.
 					</p>
 
 					<div style="background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 20px 24px; margin-bottom: 32px;">
-						<p style="margin: 0; font-size: 13px; color: #52525b; font-style: italic; line-height: 1.6;">
+						<p style="margin: 0; font-size: 13px; color: #3f3f46; font-style: italic; line-height: 1.6;">
 							"Building things that matter, one commit at a time."
 						</p>
 					</div>
