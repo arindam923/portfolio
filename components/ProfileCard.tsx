@@ -118,12 +118,12 @@ const ProfileCard = () => {
 						</h1>
 
 						<h2 className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 tracking-tight font-medium mt-4 max-w-lg">
-							Full Stack Developer framing the future on the web. Crafting highly performant, visual-grade digital solutions.
+							Full Stack Engineer from India. 6+ years in the trenches of the web.
 						</h2>
 					</div>
 
 					<p className="text-sm md:text-base text-zinc-500 dark:text-zinc-500 leading-relaxed max-w-xl">
-						I engineer robust, production-grade applications that solve real-world problems. With a deep focus on rapid development, secure escrow transaction systems, and elegant user experience design, I craft systems that perform as good as they look.
+						Over the last 6 years, I've worked with startups of every size, all over the world — jumping between frontend, backend, DevOps, and tech lead roles. I like building things that work well, ship fast, and don't fall apart at 3 a.m.
 					</p>
 
 					{/* Core Technologies Minimal Grid */}
